@@ -124,6 +124,14 @@ h1.logo{text-align:center;font-size:40px;margin:24px 0 0;color:#ffe28a;text-shad
 .reward{font-size:18px;font-weight:900;color:#7be495}
 .small-note{font-size:12px;color:#f0e6d2;text-align:center;margin-top:10px;line-height:1.7;text-shadow:0 1px 3px rgba(0,0,0,.7)}
 .sound-btn{position:fixed;top:10px;inset-inline-end:10px;z-index:60;width:44px;height:44px;border-radius:50%;font-size:20px;padding:0;background:rgba(0,0,0,.45);color:#fff}
+/* ===== world ===== */
+.world-hud{display:flex;align-items:center;gap:8px;background:var(--panel);border:2px solid rgba(255,255,255,.25);border-radius:14px;padding:7px 12px;margin-bottom:8px;font-weight:800}
+.world-wrap{position:relative;border-radius:16px;overflow:hidden;border:3px solid #4d2f12;box-shadow:0 14px 28px rgba(0,0,0,.5)}
+#worldCanvas{display:block;width:100%;height:auto;touch-action:none;background:#7a4a21}
+#joyBase{position:absolute;bottom:16px;inset-inline-start:16px;width:118px;height:118px;border-radius:50%;background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.4);touch-action:none;z-index:5}
+#joyKnob{position:absolute;top:50%;left:50%;width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.75);transform:translate(-50%,-50%);box-shadow:0 3px 8px rgba(0,0,0,.4)}
+#actBtn{position:absolute;bottom:26px;inset-inline-end:16px;z-index:5;background:linear-gradient(#ffc94d,#f5a623);color:#3a2400;font-size:17px;padding:14px 20px;display:none}
+#fadeBlack{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .45s;z-index:8}
 </style>
 </head>
 <body>
@@ -144,8 +152,9 @@ h1.logo{text-align:center;font-size:40px;margin:24px 0 0;color:#ffe28a;text-shad
     </div>
   </div>
   <div class="menu-btns">
-    <button class="btn-gold" onclick="showScreen('map')">العب — خريطة المستويات</button>
-    <button class="btn-blue" onclick="showScreen('heroes')">اختر الشخصية</button>
+    <button class="btn-gold" onclick="enterWorld()">العب — ادخل بيت الشجرة</button>
+    <button class="btn-blue" onclick="showScreen('map')">خريطة المستويات</button>
+    <button class="btn-ghost" onclick="showScreen('heroes')">اختر الشخصية</button>
   </div>
   <p class="small-note">كلما طلع مستواك، كتجيك بطاقات أقوى تلقائياً في الرزمة ديالك. والخاسر كيشرب الصودا المقززة!</p>
 </div>
@@ -184,6 +193,18 @@ h1.logo{text-align:center;font-size:40px;margin:24px 0 0;color:#ffe28a;text-shad
   <div class="log" id="log"></div>
 </div>
 
+<!-- WORLD -->
+<div class="screen" id="scr-world">
+  <div class="world-hud"><span id="worldHudHero"></span><span style="flex:1"></span><span class="lvl-badge" id="worldHudLvl"></span><button class="btn-ghost" style="padding:6px 12px;font-size:13px" onclick="showScreen('menu')">القائمة</button></div>
+  <div class="world-wrap">
+    <canvas id="worldCanvas" width="480" height="560"></canvas>
+    <div id="joyBase"><div id="joyKnob"></div></div>
+    <button id="actBtn" onclick="doInteract()">تفاعل</button>
+    <div id="fadeBlack"></div>
+  </div>
+  <p class="small-note">تحرك بالأنالوج، امشِ حتى للطاولة واضغط «العب حرب البطاقات». تقدر تهضر مع الكلب والروبوت حتى هما.</p>
+</div>
+
 <!-- VS overlay -->
 <div class="overlay" id="vsOverlay">
   <div class="box">
@@ -199,8 +220,9 @@ h1.logo{text-align:center;font-size:40px;margin:24px 0 0;color:#ffe28a;text-shad
     <p id="endText"></p>
     <p class="reward" id="endReward"></p>
     <div style="display:grid;gap:8px;margin-top:10px">
-      <button class="btn-gold" id="nextBtn" onclick="nextLevel()">المستوى التالي</button>
-      <button class="btn-blue" onclick="closeEnd();showScreen('map')">الخريطة</button>
+      <button class="btn-gold" onclick="closeEnd();enterWorld()">رجوع لبيت الشجرة</button>
+      <button class="btn-blue" id="nextBtn" onclick="nextLevel()">المستوى التالي</button>
+      <button class="btn-ghost" onclick="closeEnd();showScreen('map')">الخريطة</button>
       <button class="btn-ghost" onclick="closeEnd();showScreen('menu')">القائمة</button>
     </div>
   </div>
@@ -869,11 +891,16 @@ function playerEndTurn(){
 
 /* ================= NAVIGATION ================= */
 function showScreen(name){
-  ['menu','heroes','map','battle'].forEach(s=>document.getElementById('scr-'+s).classList.toggle('on', s===name));
+  ['menu','heroes','map','battle','world'].forEach(s=>document.getElementById('scr-'+s).classList.toggle('on', s===name));
+  if(name==='world') startWorld(); else stopWorld();
   if(name==='menu'){ setScene('treefort'); renderMenu(); }
   if(name==='map') renderMap();
   if(name==='heroes') renderHeroes();
   window.scrollTo(0,0);
+}
+function enterWorld(){
+  player.x = 500; player.y = 440; player.dir = 'up';
+  showScreen('world');
 }
 function renderMenu(){
   const h = heroById(SAVE.hero);
@@ -936,6 +963,257 @@ function nextLevel(){
   const n = Math.min(G.levelIdx+1, LEVELS.length-1);
   startBattle(n);
 }
+
+/* ================= WORLD (walk around the Tree Fort) ================= */
+const WW = 960, WH = 720;
+let worldOn = false, wctx = null, wLast = 0, wRaf = null;
+let player = {x:480, y:470, dir:'down', frame:0, moving:false};
+let robot = {x:220, y:340, tx:220, ty:340, wait:1, frame:0, dir:'down'};
+let joy = {active:false, dx:0, dy:0};
+let keys = {};
+let bubble = {who:null, text:'', until:0};
+let nearZone = null;
+
+const SOLIDS = [
+  {x:425,y:295,w:150,h:95}, {x:55,y:115,w:190,h:75}, {x:695,y:55,w:210,h:45},
+  {x:845,y:595,w:45,h:45}, {x:115,y:515,w:95,h:60}
+];
+const ZONES = [
+  {id:'table', x:500, y:408, r:88, label:'العب حرب البطاقات'},
+  {id:'dog', x:500, y:252, r:82, label:'هضر مع الكلب'},
+  {id:'robot', x:0, y:0, r:78, label:'هضر مع الروبوت', dynamic:true},
+  {id:'couch', x:150, y:202, r:88, label:'استرح'},
+  {id:'door', x:480, y:672, r:82, label:'خريطة المستويات'}
+];
+const DOG_LINES = ['يلا نلعبو حرب البطاقات!','أنا ما كنخسرش في هاد اللعبة!','الخاسر كيشرب الصودا المقززة!','الخنزير ديالي غادي ياكل ذرتك!'];
+const ROBOT_LINES = ['بيب بوب!','كنحب نلعب حرب البطاقات!','المستنقع هو أرضي!','جاهز للمعركة؟'];
+
+function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+function collides(nx, ny){
+  if(nx<42 || nx>WW-42 || ny<78 || ny>WH-26) return true;
+  const box = {x:nx-13, y:ny-10, w:26, h:20};
+  return SOLIDS.some(s => box.x < s.x+s.w && box.x+box.w > s.x && box.y < s.y+s.h && box.y+box.h > s.y);
+}
+function drawChar(c, heroId, x, y, dir, frame, sitting){
+  const bodyCol = {boy:'#3a7bd5', dog:'#f7c948', princess:'#f28bb4', vampire:'#3a3a5e', iceking:'#a8d8ff', robot:'#7fc4c9'}[heroId] || '#888';
+  const skin = {boy:'#ffd9a0', dog:'#f7c948', princess:'#ffb3d9', vampire:'#e8e4f5', iceking:'#bfe3ff', robot:'#b8c4ce'}[heroId] || '#ffd9a0';
+  const moving = !sitting && frame>0;
+  const bob = moving ? Math.abs(Math.sin(frame))*2 : 0;
+  const legSwing = moving ? Math.sin(frame)*5 : 0;
+  c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(x, y+2, 15, 5, 0, 0, 7); c.fill();
+  if(!sitting){
+    c.fillStyle='#2b2b3d';
+    c.fillRect(x-9, y-9-Math.max(0,legSwing), 7, 9+Math.max(0,legSwing));
+    c.fillRect(x+2, y-9-Math.max(0,-legSwing), 7, 9+Math.max(0,-legSwing));
+  }
+  const by = y - 10 - bob;
+  c.fillStyle=bodyCol; rr(c, x-12, by-16, 24, 20, 7); c.fill();
+  const armSwing = moving ? Math.sin(frame)*4 : 0;
+  c.fillRect(x-16, by-14+armSwing*.4, 5, 13);
+  c.fillRect(x+11, by-14-armSwing*.4, 5, 13);
+  const hy = by-30;
+  c.fillStyle=skin; c.beginPath(); c.arc(x, hy, 13, 0, 7); c.fill();
+  if(heroId==='boy'){ c.fillStyle='#fff'; c.beginPath(); c.arc(x, hy-2, 13.5, Math.PI, 0); c.fill(); c.fillRect(x-13.5, hy-4, 27, 5); c.beginPath(); c.arc(x-10,hy-13,4,0,7); c.arc(x+10,hy-13,4,0,7); c.fill(); }
+  if(heroId==='dog'){ c.fillStyle='#e0a81e'; c.beginPath(); c.ellipse(x-13,hy-2,4,9,0,0,7); c.ellipse(x+13,hy-2,4,9,0,0,7); c.fill(); }
+  if(heroId==='princess'){ c.fillStyle='#f5a623'; c.beginPath(); c.moveTo(x-9,hy-10); c.lineTo(x-5,hy-18); c.lineTo(x,hy-11); c.lineTo(x+5,hy-18); c.lineTo(x+9,hy-10); c.closePath(); c.fill(); }
+  if(heroId==='vampire'){ c.fillStyle='#2b2b3d'; c.beginPath(); c.arc(x,hy-2,13.5,Math.PI,0); c.fill(); c.fillRect(x-13.5,hy-4,27,6); }
+  if(heroId==='iceking'){ c.fillStyle='#f5a623'; c.beginPath(); c.moveTo(x-10,hy-9); c.lineTo(x-6,hy-19); c.lineTo(x,hy-11); c.lineTo(x+6,hy-19); c.lineTo(x+10,hy-9); c.closePath(); c.fill(); c.fillStyle='#fff'; c.beginPath(); c.ellipse(x,hy+9,9,7,0,0,7); c.fill(); }
+  if(heroId==='robot'){ c.fillStyle='#8a97a3'; c.fillRect(x-13,hy-13,26,24); c.fillStyle='#223'; c.fillRect(x-9,hy-6,6,5); c.fillRect(x+3,hy-6,6,5); }
+  if(dir!=='up' && heroId!=='robot'){
+    c.fillStyle='#222';
+    const ex = dir==='left'?-3 : dir==='right'?3 : 0;
+    c.beginPath(); c.arc(x-5+ex,hy,1.8,0,7); c.arc(x+5+ex,hy,1.8,0,7); c.fill();
+    c.strokeStyle='#222'; c.lineWidth=1.6; c.beginPath(); c.arc(x+ex,hy+4,4,0.15*Math.PI,0.85*Math.PI); c.stroke();
+  }
+  if(heroId==='dog'){ c.fillStyle='#222'; c.beginPath(); c.ellipse(x,hy+4,3.4,2.4,0,0,7); c.fill(); }
+}
+function drawBubble(c, x, y, text){
+  c.font='bold 13px system-ui';
+  const w = c.measureText(text).width + 20;
+  const bx = x - w/2, by = y - 92;
+  c.fillStyle='#fff'; rr(c, bx, by, w, 27, 9); c.fill();
+  c.beginPath(); c.moveTo(x-6, by+27); c.lineTo(x+6, by+27); c.lineTo(x, by+35); c.closePath(); c.fill();
+  c.fillStyle='#222'; c.textAlign='center'; c.fillText(text, x, by+19);
+}
+function drawWorld(){
+  const c = wctx; if(!c) return;
+  const camX = Math.max(0, Math.min(WW-480, player.x-240));
+  const camY = Math.max(0, Math.min(WH-560, player.y-300));
+  c.save(); c.translate(-camX, -camY);
+  /* floor planks */
+  for(let i=0;i<WH/60;i++){ c.fillStyle = i%2 ? '#835126' : '#7a4a21'; c.fillRect(0, i*60, WW, 60); }
+  c.strokeStyle='rgba(0,0,0,.18)'; c.lineWidth=2;
+  for(let i=0;i<=WH/60;i++){ c.beginPath(); c.moveTo(0,i*60); c.lineTo(WW,i*60); c.stroke(); }
+  /* rug */
+  c.fillStyle='#a83a3a'; c.beginPath(); c.ellipse(500, 345, 200, 115, 0, 0, 7); c.fill();
+  c.strokeStyle='#f5a623'; c.lineWidth=5; c.beginPath(); c.ellipse(500, 345, 178, 98, 0, 0, 7); c.stroke();
+  /* walls */
+  c.fillStyle='#5d3a17'; c.fillRect(0,0,WW,56); c.fillRect(0,0,26,WH); c.fillRect(WW-26,0,26,WH); c.fillRect(0,WH-20,WW,20);
+  /* window */
+  c.fillStyle='#aee3ff'; rr(c, 390, 8, 180, 42, 8); c.fill();
+  c.strokeStyle='#3a2410'; c.lineWidth=5; rr(c, 390, 8, 180, 42, 8); c.stroke();
+  c.beginPath(); c.moveTo(480,8); c.lineTo(480,50); c.stroke();
+  c.fillStyle='#fff'; c.beginPath(); c.ellipse(435,26,20,7,0,0,7); c.ellipse(525,20,16,6,0,0,7); c.fill();
+  /* door */
+  c.fillStyle='#4d2f12'; rr(c, 445, WH-58, 70, 40, 6); c.fill();
+  c.fillStyle='#ffd98a'; c.beginPath(); c.arc(500, WH-38, 4, 0, 7); c.fill();
+  /* shelf */
+  c.fillStyle='#4d2f12'; c.fillRect(695,55,210,45);
+  c.fillStyle='#e74c3c'; c.fillRect(710,66,22,24); c.fillStyle='#f5a623'; c.fillRect(738,70,18,20); c.fillStyle='#4a90d9'; c.fillRect(762,64,24,26); c.fillStyle='#2ecc71'; c.fillRect(792,72,16,18);
+  c.fillStyle='#ffd98a'; c.beginPath(); c.arc(850,80,13,0,7); c.fill();
+  /* couch */
+  c.fillStyle='#7d3c98'; rr(c, 55, 115, 190, 75, 16); c.fill();
+  c.fillStyle='#9b59b6'; rr(c, 65, 125, 80, 40, 10); c.fill(); rr(c, 152, 125, 80, 40, 10); c.fill();
+  /* side table + soda */
+  c.fillStyle='#6e4520'; c.fillRect(115,515,95,60);
+  c.fillStyle='#e74c3c'; c.fillRect(140,528,14,20); c.fillStyle='#7be495'; c.fillRect(165,528,14,20);
+  /* plant */
+  c.fillStyle='#b96a00'; c.fillRect(852,618,30,26);
+  c.fillStyle='#3f7d3a'; c.beginPath(); c.ellipse(867,605,22,16,0,0,7); c.fill();
+  /* chairs */
+  c.fillStyle='#5d3a17'; rr(c, 472, 258, 56, 20, 6); c.fill(); rr(c, 472, 398, 56, 20, 6); c.fill();
+  /* table */
+  c.fillStyle='#8a5a2b'; rr(c, 425, 295, 150, 95, 10); c.fill();
+  c.strokeStyle='#4d2f12'; c.lineWidth=4; rr(c, 425, 295, 150, 95, 10); c.stroke();
+  c.fillStyle='#fff'; c.save(); c.translate(470,330); c.rotate(-.3); c.fillRect(-11,-15,22,30); c.restore();
+  c.save(); c.translate(505,340); c.rotate(.2); c.fillRect(-11,-15,22,30); c.restore();
+  c.save(); c.translate(535,325); c.rotate(-.1); c.fillRect(-11,-15,22,30); c.restore();
+  c.fillStyle='#e74c3c'; c.fillRect(440,360,12,16);
+  c.fillStyle='#8fbf6f'; c.fillRect(545,362,12,16);
+  c.fillStyle='#ffd98a'; c.beginPath(); c.ellipse(500,368,17,8,0,0,7); c.fill();
+  /* quest marker over table */
+  const bounce = Math.sin(performance.now()/280)*5;
+  c.fillStyle='#ffe28a'; c.font='900 26px system-ui'; c.textAlign='center';
+  c.fillText('!', 500, 282+bounce);
+  /* entities sorted by y */
+  const ents = [
+    {y:268, draw:()=>drawChar(c, 'dog', 500, 268, 'down', 0, true)},
+    {y:robot.y, draw:()=>drawChar(c, 'robot', robot.x, robot.y, robot.dir, robot.frame, false)},
+    {y:player.y, draw:()=>drawChar(c, SAVE.hero, player.x, player.y, player.dir, player.moving?player.frame:0, false)}
+  ].sort((a,b)=>a.y-b.y);
+  ents.forEach(e=>e.draw());
+  /* speech bubble */
+  if(bubble.who && performance.now() < bubble.until){
+    const pos = bubble.who==='dog' ? [500,268] : bubble.who==='robot' ? [robot.x, robot.y] : [player.x, player.y];
+    drawBubble(c, pos[0], pos[1], bubble.text);
+  }
+  c.restore();
+}
+function showBubble(who, text){
+  bubble = {who, text, until: performance.now()+2400};
+}
+function updateWorld(dt){
+  let vx = joy.dx, vy = joy.dy;
+  if(keys['arrowleft']||keys['a']) vx -= 1;
+  if(keys['arrowright']||keys['d']) vx += 1;
+  if(keys['arrowup']||keys['w']) vy -= 1;
+  if(keys['arrowdown']||keys['s']) vy += 1;
+  const len = Math.hypot(vx, vy);
+  player.moving = len > .18;
+  if(player.moving){
+    vx/=Math.max(1,len); vy/=Math.max(1,len);
+    const sp = 175;
+    const nx = player.x + vx*sp*dt, ny = player.y + vy*sp*dt;
+    if(!collides(nx, player.y)) player.x = nx;
+    if(!collides(player.x, ny)) player.y = ny;
+    player.dir = Math.abs(vx) > Math.abs(vy) ? (vx<0?'left':'right') : (vy<0?'up':'down');
+    player.frame += dt*11;
+  }
+  /* robot wander */
+  if(robot.wait>0){ robot.wait -= dt; robot.frame = 0; }
+  else{
+    const dx = robot.tx-robot.x, dy = robot.ty-robot.y, d = Math.hypot(dx,dy);
+    if(d<8){ robot.wait = 1+Math.random()*2.5; robot.tx = 80+Math.random()*800; robot.ty = 110+Math.random()*540; }
+    else{
+      const sp=70, nx=robot.x+dx/d*sp*dt, ny=robot.y+dy/d*sp*dt;
+      if(!collides(nx, robot.y)) robot.x=nx; else robot.wait=.5;
+      if(!collides(robot.x, ny)) robot.y=ny;
+      robot.dir = Math.abs(dx)>Math.abs(dy) ? (dx<0?'left':'right') : (dy<0?'up':'down');
+      robot.frame += dt*9;
+    }
+  }
+  /* near zone */
+  nearZone = null;
+  for(const z of ZONES){
+    const zx = z.dynamic ? robot.x : z.x, zy = z.dynamic ? robot.y : z.y;
+    if(Math.hypot(player.x-zx, player.y-zy) < z.r){ nearZone = z; break; }
+  }
+  const btn = document.getElementById('actBtn');
+  if(btn){
+    btn.style.display = nearZone ? 'block' : 'none';
+    if(nearZone) btn.textContent = nearZone.label;
+  }
+}
+function worldLoop(t){
+  if(!worldOn) return;
+  const dt = Math.min(.05, (t - wLast)/1000 || .016);
+  wLast = t;
+  updateWorld(dt);
+  drawWorld();
+  wRaf = requestAnimationFrame(worldLoop);
+}
+function startWorld(){
+  const cv = document.getElementById('worldCanvas');
+  if(cv && !wctx) wctx = cv.getContext('2d');
+  const h = heroById(SAVE.hero);
+  document.getElementById('worldHudHero').textContent = h.name;
+  document.getElementById('worldHudLvl').textContent = 'المستوى ' + SAVE.level;
+  worldOn = true; wLast = performance.now();
+  cancelAnimationFrame(wRaf);
+  wRaf = requestAnimationFrame(worldLoop);
+}
+function stopWorld(){
+  worldOn = false;
+  cancelAnimationFrame(wRaf);
+  joy.dx = 0; joy.dy = 0;
+  const knob = document.getElementById('joyKnob');
+  if(knob) knob.style.transform = 'translate(-50%,-50%)';
+}
+function doInteract(){
+  if(!worldOn || !nearZone) return;
+  sfx.pop();
+  if(nearZone.id==='table'){
+    const f = document.getElementById('fadeBlack');
+    f.style.opacity = 1;
+    setTimeout(()=>{
+      f.style.opacity = 0;
+      startBattle(SAVE.completed < LEVELS.length ? SAVE.completed : LEVELS.length-1);
+    }, 480);
+  }
+  else if(nearZone.id==='dog'){
+    const line = DOG_LINES[Math.floor(Math.random()*DOG_LINES.length)];
+    showBubble('dog', line); speak(line, .8);
+  }
+  else if(nearZone.id==='robot'){
+    const line = ROBOT_LINES[Math.floor(Math.random()*ROBOT_LINES.length)];
+    showBubble('robot', line); speak(line, 1.0);
+  }
+  else if(nearZone.id==='couch'){ showBubble('player', 'شوية ديال الراحة قبل المعركة...'); }
+  else if(nearZone.id==='door'){ showScreen('map'); }
+}
+/* joystick + keyboard */
+(function(){
+  const base = document.getElementById('joyBase');
+  const knob = document.getElementById('joyKnob');
+  if(!base) return;
+  let pid = null;
+  function setKnob(dx, dy){ knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`; }
+  function handle(e){
+    const r = base.getBoundingClientRect();
+    let dx = e.clientX - (r.left + r.width/2), dy = e.clientY - (r.top + r.height/2);
+    const d = Math.hypot(dx,dy), max = 36;
+    if(d>max){ dx = dx/d*max; dy = dy/d*max; }
+    joy.dx = dx/max; joy.dy = dy/max;
+    setKnob(dx, dy);
+  }
+  base.addEventListener('pointerdown', e=>{ pid = e.pointerId; base.setPointerCapture(pid); joy.active = true; handle(e); });
+  base.addEventListener('pointermove', e=>{ if(joy.active && e.pointerId===pid) handle(e); });
+  const end = e=>{ if(e.pointerId===pid){ joy.active=false; joy.dx=0; joy.dy=0; setKnob(0,0); } };
+  base.addEventListener('pointerup', end);
+  base.addEventListener('pointercancel', end);
+  window.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()] = true; if(worldOn && (e.key==='e' || e.key==='E' || e.key===' ')) doInteract(); });
+  window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; });
+})();
 
 /* ================= INIT ================= */
 document.getElementById('soundBtn').textContent = SAVE.sound ? '🔊' : '🔇';
