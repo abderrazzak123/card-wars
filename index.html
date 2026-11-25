@@ -3,540 +3,831 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>حرب البطاقات</title>
-<meta name="theme-color" content="#14142b">
+<title>حرب البطاقات — مغامرة</title>
+<meta name="theme-color" content="#2a1a0e">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{
-  --bg:#14142b; --panel:#1f1f3d; --panel2:#2a2a52; --ink:#f4f1e6; --muted:#b9b4d6;
-  --gold:#f5a623; --red:#e74c3c; --green:#2ecc71; --blue:#4a90d9;
-}
-body{margin:0;background:radial-gradient(1200px 700px at 50% -10%,#2b2b5e 0%,var(--bg) 60%);color:var(--ink);font-family:system-ui,'Segoe UI',Tahoma,sans-serif;min-height:100vh}
-button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;padding:10px 16px;font-weight:700;font-size:15px}
-.btn-gold{background:var(--gold);color:#241a00}
-.btn-ghost{background:var(--panel2);color:var(--ink);border:1px solid #45457a}
-.btn-red{background:var(--red);color:#fff}
-.btn:disabled{opacity:.45;cursor:default}
-.screen{display:none;max-width:560px;margin:0 auto;padding:14px 10px 30px}
+:root{--ink:#fff8e7;--gold:#f5a623;--red:#e74c3c;--panel:rgba(24,16,8,.88)}
+body{margin:0;color:var(--ink);font-family:system-ui,'Segoe UI',Tahoma,sans-serif;min-height:100vh;overflow-x:hidden;background:#2a1a0e}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:14px;padding:11px 18px;font-weight:800;font-size:16px;box-shadow:0 4px 0 rgba(0,0,0,.4)}
+button:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.btn-gold{background:linear-gradient(#ffc94d,#f5a623);color:#3a2400}
+.btn-blue{background:linear-gradient(#6db3f2,#3a7bd5);color:#fff}
+.btn-red{background:linear-gradient(#ff7a6b,#e74c3c);color:#fff}
+.btn-ghost{background:rgba(255,255,255,.14);color:var(--ink);border:2px solid rgba(255,255,255,.35)}
+button:disabled{opacity:.45}
+.screen{display:none;max-width:560px;margin:0 auto;padding:12px 10px 26px;position:relative;z-index:2}
 .screen.on{display:block}
-h1.logo{text-align:center;font-size:34px;margin:18px 0 2px;color:var(--gold);text-shadow:0 3px 0 #7a4d00}
-.sub{text-align:center;color:var(--muted);margin:0 0 18px;font-size:14px}
+.scene-bg{position:fixed;inset:0;z-index:0;overflow:hidden}
+.scene-bg svg{width:100%;height:100%;display:block}
+.cloud{animation:drift 26s linear infinite}
+.cloud2{animation:drift 38s linear infinite reverse}
+@keyframes drift{from{transform:translateX(-60px)}to{transform:translateX(60px)}}
+h1.logo{text-align:center;font-size:40px;margin:24px 0 0;color:#ffe28a;text-shadow:0 4px 0 #b96a00,0 8px 18px rgba(0,0,0,.55)}
+.tagline{text-align:center;color:#fff;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,.65);margin:4px 0 12px}
+.menu-hero{display:flex;justify-content:center;gap:4px;margin:4px 0}
+.menu-hero svg{width:88px;height:88px;animation:bob 2.2s ease-in-out infinite}
+.menu-hero svg:nth-child(2){animation-delay:.4s}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.player-card{background:var(--panel);border:2px solid rgba(255,255,255,.25);border-radius:16px;padding:10px 14px;display:flex;align-items:center;gap:12px;margin:12px 0}
+.player-card svg{width:54px;height:54px;animation:bob 2.4s ease-in-out infinite}
+.xpbar{flex:1;height:14px;background:rgba(255,255,255,.18);border-radius:8px;overflow:hidden}
+.xpbar>div{height:100%;background:linear-gradient(90deg,#7be495,#2ecc71);transition:width .6s}
+.lvl-badge{background:var(--gold);color:#3a2400;font-weight:900;border-radius:10px;padding:3px 10px;font-size:14px}
+.menu-btns{display:grid;gap:10px;margin-top:8px}
+.menu-btns button{font-size:19px;padding:15px}
 .hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.hero-card{background:var(--panel);border:2px solid #3a3a6e;border-radius:16px;padding:12px;text-align:center;cursor:pointer;transition:.15s}
-.hero-card.sel{border-color:var(--gold);background:#2c2c58;transform:scale(1.02)}
-.hero-card svg{width:74px;height:74px}
-.hero-card .hn{font-weight:800;font-size:17px;margin-top:4px}
-.hero-card .hd{color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:3px;min-height:38px}
-.mode-row{display:flex;gap:8px;margin:16px 0 6px}
-.mode-row button{flex:1}
-.mode-row button.sel{outline:3px solid var(--gold)}
-/* ===== table ===== */
-.opp-bar,.my-bar{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:14px;padding:8px 12px;margin-bottom:8px}
-.opp-bar svg,.my-bar svg{width:46px;height:46px;flex:none}
-.hp{font-size:20px;font-weight:900;color:#ff8a7a}
-.hp small{font-size:11px;color:var(--muted);font-weight:600}
-.pname{font-weight:800}
-.hand-count{margin-inline-start:auto;color:var(--muted);font-size:13px}
-.lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
-.lane{border-radius:12px;min-height:118px;padding:5px;position:relative;border:2px solid rgba(255,255,255,.14);display:flex;flex-direction:column}
-.lane .land-name{font-size:10.5px;font-weight:800;text-align:center;color:rgba(0,0,0,.65);background:rgba(255,255,255,.35);border-radius:7px;padding:1px 2px;margin-bottom:4px}
+.hero-card{background:var(--panel);border:3px solid rgba(255,255,255,.25);border-radius:18px;padding:12px;text-align:center;cursor:pointer}
+.hero-card.sel{border-color:var(--gold);background:rgba(80,60,10,.88)}
+.hero-card svg{width:84px;height:84px;animation:bob 2.2s ease-in-out infinite}
+.hero-card .hn{font-weight:900;font-size:18px;margin-top:2px}
+.hero-card .hd{color:#e8ddc8;font-size:12.5px;line-height:1.5;min-height:38px}
+.hero-card .hl{font-size:11px;font-weight:800;color:#ffe28a}
+.map-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.lvl-node{background:var(--panel);border:3px solid rgba(255,255,255,.25);border-radius:16px;padding:10px;text-align:center;cursor:pointer;position:relative}
+.lvl-node.locked{opacity:.45;cursor:default}
+.lvl-node.done{border-color:#2ecc71}
+.lvl-node svg{width:52px;height:52px}
+.lvl-node .ln{font-weight:900;font-size:16px}
+.lvl-node .lp{color:#e8ddc8;font-size:12px}
+.lvl-node .lock{position:absolute;top:6px;inset-inline-end:8px;font-size:18px}
+/* ===== battle / 3D table ===== */
+.fighter-row{display:flex;align-items:center;gap:10px;margin:4px 0}
+.fighter{text-align:center;position:relative;flex:none;width:96px}
+.fighter svg{width:78px;height:78px;animation:bob 2.2s ease-in-out infinite;filter:drop-shadow(0 6px 6px rgba(0,0,0,.45))}
+.fighter .fname{font-weight:900;font-size:13px;text-shadow:0 2px 4px rgba(0,0,0,.7)}
+.fighter.shake svg{animation:shake .45s ease}
+.hpbar{height:12px;background:rgba(0,0,0,.5);border-radius:7px;overflow:hidden;border:1px solid rgba(255,255,255,.45);margin-top:2px}
+.hpbar>div{height:100%;background:linear-gradient(90deg,#ff8a7a,#e74c3c);transition:width .5s}
+.hpnum{font-size:11.5px;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.bubble{position:absolute;bottom:96%;inset-inline-start:50%;transform:translateX(50%);background:#fff;color:#222;font-weight:800;font-size:12.5px;border-radius:12px;padding:5px 9px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.bubble.show{opacity:1}
+.bubble::after{content:'';position:absolute;top:100%;inset-inline-start:50%;transform:translateX(50%);border:6px solid transparent;border-top-color:#fff}
+.table-wrap{perspective:950px;margin:2px 0 0}
+.board{transform:rotateX(16deg);transform-style:preserve-3d;background:linear-gradient(#8a5a2b,#6e4520);border:6px solid #4d2f12;border-radius:14px;padding:8px;box-shadow:0 24px 34px rgba(0,0,0,.55)}
+.lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;transform-style:preserve-3d}
+.lanes.foe{margin-bottom:7px}
+.lane{border-radius:10px;min-height:106px;padding:4px;position:relative;border:2px solid rgba(255,255,255,.35);display:flex;flex-direction:column;transform-style:preserve-3d;overflow:hidden}
+.lane .land-art{position:absolute;inset:0;opacity:.9}
+.lane .land-art svg{width:100%;height:100%;display:block}
+.lane .land-name{position:relative;font-size:9.5px;font-weight:800;text-align:center;color:rgba(0,0,0,.7);background:rgba(255,255,255,.5);border-radius:6px;padding:1px;margin-bottom:2px;z-index:2}
 .lane.target{outline:3px dashed #fff;cursor:pointer}
-.creature{background:#fffdf4;color:#222;border-radius:9px;padding:5px 4px;text-align:center;box-shadow:0 3px 6px rgba(0,0,0,.35);cursor:pointer;position:relative}
-.creature .cn{font-size:11.5px;font-weight:800;line-height:1.25;min-height:28px}
-.creature .stats{display:flex;justify-content:space-between;font-weight:900;font-size:15px;margin-top:2px}
-.creature .atk{color:#c0392b}.creature .def{color:#2471a3}
-.creature .fl{font-size:9.5px;color:#7d3c98;font-weight:700;margin-top:2px;line-height:1.3}
-.creature.flooped{opacity:.55;transform:rotate(-4deg)}
-.creature.frozen{filter:saturate(.3) brightness(1.15)}
-.creature.sel{outline:3px solid var(--gold)}
-.building{margin-top:4px;background:#3b2f1a;color:#ffd98a;border-radius:7px;font-size:9.5px;font-weight:700;text-align:center;padding:3px 2px;line-height:1.3}
-.empty-lane{flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:20px}
-.mid-bar{display:flex;align-items:center;gap:8px;margin:6px 0}
-.mid-bar .turn-info{font-weight:800;font-size:14px}
-.mid-bar .actions{color:var(--gold);font-weight:800;font-size:13px}
-.hand{display:flex;gap:7px;overflow-x:auto;padding:8px 2px 4px;min-height:128px}
-.card{flex:none;width:104px;background:#fffdf4;color:#222;border-radius:11px;padding:6px;box-shadow:0 4px 8px rgba(0,0,0,.4);cursor:pointer;position:relative;border-top:9px solid #999}
-.card.sel{outline:3px solid var(--gold);transform:translateY(-8px)}
-.card .cn{font-size:12px;font-weight:800;line-height:1.3;min-height:31px}
+.monster{text-align:center;cursor:pointer;position:relative;z-index:3;transform:translateZ(26px);transform-style:preserve-3d;margin-top:auto}
+.monster .sprite{position:relative;display:inline-block}
+.monster svg{width:56px;height:56px;filter:drop-shadow(0 0 7px rgba(110,231,255,.85)) drop-shadow(0 5px 4px rgba(0,0,0,.4));animation:holo 2.6s ease-in-out infinite}
+@keyframes holo{0%,100%{opacity:.94}50%{opacity:1}}
+.holo-ring{width:52px;height:13px;margin:-7px auto 0;border-radius:50%;background:radial-gradient(ellipse,rgba(110,231,255,.85) 0%,rgba(110,231,255,.25) 60%,transparent 75%);animation:ringPulse 2.6s ease-in-out infinite}
+@keyframes ringPulse{0%,100%{transform:scaleX(1);opacity:.8}50%{transform:scaleX(1.14);opacity:1}}
+.monster .plate{font-size:10px;font-weight:800;color:#111;background:rgba(255,255,255,.88);border-radius:6px;padding:1px 3px;line-height:1.45;margin-top:1px}
+.monster .plate .a{color:#c0392b}.monster .plate .d{color:#2471a3}
+.monster.flooped{opacity:.55}
+.monster.frozen svg{filter:saturate(.25) brightness(1.35) drop-shadow(0 0 7px rgba(170,220,255,.9))}
+.monster.sel{outline:3px solid var(--gold);border-radius:10px}
+.monster.pop{animation:popIn .38s ease}
+@keyframes popIn{from{transform:translateZ(26px) scale(0)}70%{transform:translateZ(26px) scale(1.2)}to{transform:translateZ(26px) scale(1)}}
+.monster.lunge-up{animation:lungeUp .45s ease}
+.monster.lunge-down{animation:lungeDown .45s ease}
+@keyframes lungeUp{0%{transform:translateZ(26px) translateY(0)}45%{transform:translateZ(60px) translateY(-54px) scale(1.22)}100%{transform:translateZ(26px) translateY(0)}}
+@keyframes lungeDown{0%{transform:translateZ(26px) translateY(0)}45%{transform:translateZ(60px) translateY(54px) scale(1.22)}100%{transform:translateZ(26px) translateY(0)}}
+.monster.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateZ(26px) translateX(0)}20%{transform:translateZ(26px) translateX(-6px)}40%{transform:translateZ(26px) translateX(6px)}60%{transform:translateZ(26px) translateX(-4px)}80%{transform:translateZ(26px) translateX(4px)}}
+.monster.spin{animation:spinGlow .55s ease}
+@keyframes spinGlow{0%{transform:translateZ(26px) rotate(0) scale(1)}50%{transform:translateZ(46px) rotate(180deg) scale(1.3)}100%{transform:translateZ(26px) rotate(360deg) scale(1)}}
+.dmg-float{position:absolute;top:2px;inset-inline-start:50%;transform:translateX(50%);font-weight:900;font-size:19px;color:#ff5252;text-shadow:0 2px 0 #fff,0 3px 6px rgba(0,0,0,.55);animation:floatUp 1s ease forwards;z-index:8;pointer-events:none}
+.dmg-float.heal{color:#2ecc71}
+@keyframes floatUp{from{opacity:1;margin-top:0}to{opacity:0;margin-top:-38px}}
+.building{position:relative;z-index:2;margin-top:2px;background:rgba(59,47,26,.92);color:#ffd98a;border-radius:6px;font-size:9px;font-weight:700;text-align:center;padding:2px}
+.empty-lane{flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.55);font-size:17px;position:relative;z-index:1}
+.mid-bar{display:flex;align-items:center;gap:7px;margin:8px 0 4px;flex-wrap:wrap}
+.mid-bar .ti{font-weight:900;font-size:14px;text-shadow:0 2px 4px rgba(0,0,0,.7)}
+.mid-bar .ac{color:#ffe28a;font-weight:900;font-size:13px;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.hand{display:flex;gap:7px;overflow-x:auto;padding:10px 2px 4px;min-height:132px}
+.card{flex:none;width:102px;background:#fffdf4;color:#222;border-radius:11px;padding:6px;box-shadow:0 4px 8px rgba(0,0,0,.5);cursor:pointer;position:relative;border-top:9px solid #999}
+.card.sel{outline:3px solid var(--gold);transform:translateY(-9px)}
+.card .cn{font-size:12px;font-weight:800;line-height:1.3;min-height:30px}
 .card .ct{font-size:9.5px;color:#888;font-weight:700}
-.card .stats{display:flex;justify-content:space-between;font-weight:900;font-size:16px;margin-top:2px}
+.card .tier{font-size:9px;color:#b96a00;font-weight:900}
+.card .stats{display:flex;justify-content:space-between;font-weight:900;font-size:16px}
 .card .atk{color:#c0392b}.card .def{color:#2471a3}
-.card .txt{font-size:10px;color:#555;line-height:1.4;margin-top:3px;min-height:28px}
+.card .txt{font-size:10px;color:#555;line-height:1.4;min-height:27px}
 .card .land-tag{position:absolute;top:-9px;inset-inline-start:6px;background:rgba(0,0,0,.55);color:#fff;font-size:8.5px;font-weight:800;border-radius:5px;padding:1px 5px}
-.log{background:var(--panel);border-radius:12px;padding:8px 12px;font-size:12.5px;color:var(--muted);height:74px;overflow-y:auto;line-height:1.7;margin-top:8px}
-.log b{color:var(--ink)}
-.overlay{position:fixed;inset:0;background:rgba(10,10,25,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.log{background:var(--panel);border-radius:12px;padding:7px 12px;font-size:12.5px;color:#e8ddc8;height:62px;overflow-y:auto;line-height:1.7;margin-top:7px}
+.log b{color:#fff}
+.overlay{position:fixed;inset:0;background:rgba(10,6,2,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
 .overlay.on{display:flex}
-.overlay .box{background:var(--panel);border-radius:18px;padding:24px;text-align:center;max-width:380px;width:100%}
-.overlay h2{margin:0 0 8px;font-size:24px}
-.overlay p{color:var(--muted);line-height:1.7}
-.ability-btn{background:#7d3c98;color:#fff}
-.small-note{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.7}
+.overlay .box{background:linear-gradient(#4a2f14,#2c1c0a);border:3px solid rgba(255,255,255,.3);border-radius:20px;padding:22px;text-align:center;max-width:400px;width:100%}
+.overlay h2{margin:0 0 6px;font-size:26px}
+.overlay p{color:#e8ddc8;line-height:1.7}
+.vs-row{display:flex;align-items:center;justify-content:center;gap:14px;margin:12px 0}
+.vs-row svg{width:96px;height:96px;animation:bob 1.6s ease-in-out infinite}
+.vs-txt{font-size:30px;font-weight:900;color:#ffe28a;text-shadow:0 3px 0 #b96a00}
+.reward{font-size:18px;font-weight:900;color:#7be495}
+.small-note{font-size:12px;color:#f0e6d2;text-align:center;margin-top:10px;line-height:1.7;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.sound-btn{position:fixed;top:10px;inset-inline-end:10px;z-index:60;width:44px;height:44px;border-radius:50%;font-size:20px;padding:0;background:rgba(0,0,0,.45);color:#fff}
 </style>
 </head>
 <body>
+<div class="scene-bg" id="sceneBg"></div>
+<button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊</button>
 
-<!-- ===== Screen 1: hero select ===== -->
-<div class="screen on" id="scr-select">
+<!-- MENU -->
+<div class="screen on" id="scr-menu">
   <h1 class="logo">حرب البطاقات</h1>
-  <p class="sub">اختار البطل ديالك، وادخل للمعركة على الطاولة</p>
-  <div class="hero-grid" id="heroGrid"></div>
-  <div class="mode-row">
-    <button class="btn-ghost sel" id="modeAi" onclick="setMode('ai')">ضد الذكاء الاصطناعي</button>
-    <button class="btn-ghost" id="modeLocal" onclick="setMode('local')">لاعبان في نفس التيليفون</button>
+  <p class="tagline">المعركة على طاولة بيت الشجرة</p>
+  <div class="menu-hero" id="menuHeroes"></div>
+  <div class="player-card">
+    <span id="menuHeroSvg"></span>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:8px"><span class="lvl-badge" id="lvlBadge">المستوى 1</span><b id="menuHeroName"></b></div>
+      <div class="xpbar" style="margin-top:7px"><div id="xpFill" style="width:0%"></div></div>
+      <div style="font-size:12px;color:#e8ddc8;margin-top:3px" id="xpText"></div>
+    </div>
   </div>
-  <button class="btn-gold" style="width:100%;font-size:18px;padding:14px" onclick="startGame()">ابدأ اللعبة</button>
-  <p class="small-note">القواعد: كل لاعب عندو 25 نقطة حياة و4 أراضٍ. العب المخلوقات في الأرض اللي كتناسب لونها، استعمل قوى «فلوب»، وهاجم حتى تطيح حياة الخصم لصفر.</p>
+  <div class="menu-btns">
+    <button class="btn-gold" onclick="showScreen('map')">العب — خريطة المستويات</button>
+    <button class="btn-blue" onclick="showScreen('heroes')">اختر الشخصية</button>
+  </div>
+  <p class="small-note">كلما طلع مستواك، كتجيك بطاقات أقوى تلقائياً في الرزمة ديالك. والخاسر كيشرب الصودا المقززة!</p>
 </div>
 
-<!-- ===== Screen 2: game ===== -->
-<div class="screen" id="scr-game">
-  <div class="opp-bar" id="oppBar"></div>
-  <div class="lanes" id="oppLanes"></div>
+<!-- HEROES -->
+<div class="screen" id="scr-heroes">
+  <h1 class="logo" style="font-size:30px">اختر الشخصية</h1>
+  <p class="tagline">كل شخصية عندها أرضها وقوتها وصوتها</p>
+  <div class="hero-grid" id="heroGrid"></div>
+  <button class="btn-gold" style="width:100%;margin-top:14px" onclick="showScreen('menu')">رجوع</button>
+</div>
+
+<!-- MAP -->
+<div class="screen" id="scr-map">
+  <h1 class="logo" style="font-size:30px">خريطة المستويات</h1>
+  <p class="tagline">اربح المعارك واطلع في المستوى</p>
+  <div class="map-grid" id="mapGrid"></div>
+  <button class="btn-ghost" style="width:100%;margin-top:14px" onclick="showScreen('menu')">رجوع للقائمة</button>
+</div>
+
+<!-- BATTLE -->
+<div class="screen" id="scr-battle">
+  <div class="fighter-row"><div class="fighter" id="foeFighter"></div><div style="flex:1"></div><div class="ti" id="placeName" style="font-weight:900;text-shadow:0 2px 4px rgba(0,0,0,.7)"></div></div>
+  <div class="table-wrap"><div class="board">
+    <div class="lanes foe" id="foeLanes"></div>
+    <div class="lanes" id="myLanes"></div>
+  </div></div>
   <div class="mid-bar">
-    <span class="turn-info" id="turnInfo"></span>
-    <span class="actions" id="actionsInfo"></span>
+    <span class="ti" id="turnInfo"></span><span class="ac" id="actionsInfo"></span>
     <span style="flex:1"></span>
-    <button class="ability-btn" id="heroAbilityBtn" style="display:none" onclick="useHeroAbility()">قدرة البطل</button>
-    <button class="btn-red" id="attackBtn" onclick="doAttack()">هجوم</button>
-    <button class="btn-gold" id="endBtn" onclick="endTurn()">إنهاء الدور</button>
+    <button class="btn-blue" id="heroAbilityBtn" style="display:none;padding:8px 12px;font-size:14px" onclick="useHeroAbility()">قدرة البطل</button>
+    <button class="btn-red" id="attackBtn" style="padding:8px 14px" onclick="playerAttack()">هجوم</button>
+    <button class="btn-gold" id="endBtn" style="padding:8px 14px" onclick="playerEndTurn()">إنهاء الدور</button>
   </div>
-  <div class="lanes" id="myLanes"></div>
-  <div class="my-bar" id="myBar"></div>
-  <div class="hand" id="hand"></div>
+  <div class="fighter-row"><div class="fighter" id="myFighter"></div><div class="hand" id="hand" style="flex:1"></div></div>
   <div class="log" id="log"></div>
 </div>
 
-<!-- ===== overlays ===== -->
-<div class="overlay" id="passOverlay">
+<!-- VS overlay -->
+<div class="overlay" id="vsOverlay">
   <div class="box">
-    <h2 id="passTitle">مرر التيليفون</h2>
-    <p id="passText"></p>
-    <button class="btn-gold" style="width:100%" onclick="confirmPass()">أنا جاهز</button>
+    <h2 id="vsPlace"></h2>
+    <div class="vs-row" id="vsRow"></div>
+    <p id="vsText"></p>
   </div>
 </div>
+<!-- Result overlay -->
 <div class="overlay" id="endOverlay">
   <div class="box">
     <h2 id="endTitle"></h2>
     <p id="endText"></p>
-    <button class="btn-gold" style="width:100%" onclick="location.reload()">العب مرة أخرى</button>
+    <p class="reward" id="endReward"></p>
+    <div style="display:grid;gap:8px;margin-top:10px">
+      <button class="btn-gold" id="nextBtn" onclick="nextLevel()">المستوى التالي</button>
+      <button class="btn-blue" onclick="closeEnd();showScreen('map')">الخريطة</button>
+      <button class="btn-ghost" onclick="closeEnd();showScreen('menu')">القائمة</button>
+    </div>
   </div>
 </div>
 
 <script>
-/* ================= DATA ================= */
-const LANDS = {
-  corn:  {name:'حقول الذرة',      color:'#f2b705'},
-  blue:  {name:'السهول الزرقاء',  color:'#4a90d9'},
-  sand:  {name:'الرمال',          color:'#e08a3c'},
-  swamp: {name:'المستنقع',        color:'#6a994e'},
-  nice:  {name:'الأراضي اللطيفة', color:'#f28bb4'}
-};
-const LAND_KEYS = Object.keys(LANDS);
+/* ================= SCENES (original art, same spirit) ================= */
+function sceneSvg(name){
+  const sky = (c1,c2)=>`<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="800" height="600" fill="url(#sky)"/>`;
+  const clouds = `<g fill="#ffffff" opacity=".9"><g class="cloud"><ellipse cx="150" cy="80" rx="70" ry="24"/><ellipse cx="200" cy="66" rx="50" ry="20"/></g><g class="cloud2"><ellipse cx="620" cy="110" rx="80" ry="26"/><ellipse cx="680" cy="94" rx="52" ry="20"/></g></g>`;
+  if(name==='treefort'){
+    return `<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
+    <rect width="800" height="600" fill="#7a4a21"/>
+    ${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${i*100}" y="0" width="96" height="600" fill="${i%2?'#835126':'#74451d'}"/>`).join('')}
+    <rect y="470" width="800" height="130" fill="#5d3a17"/>
+    <circle cx="400" cy="190" r="105" fill="#aee3ff" stroke="#4d2f12" stroke-width="14"/>
+    <circle cx="360" cy="160" r="16" fill="#fff"/><circle cx="450" cy="215" r="12" fill="#fff"/>
+    <path d="M295 250 Q400 200 505 250 L505 295 L295 295 Z" fill="#7ec850"/>
+    <rect x="60" y="330" width="180" height="26" rx="8" fill="#4d2f12"/><rect x="70" y="300" width="34" height="32" fill="#e74c3c"/><rect x="110" y="306" width="30" height="26" fill="#f5a623"/><rect x="146" y="298" width="36" height="34" fill="#4a90d9"/>
+    <rect x="560" y="330" width="180" height="26" rx="8" fill="#4d2f12"/><circle cx="610" cy="312" r="18" fill="#ffd98a"/><rect x="650" y="296" width="26" height="36" fill="#2ecc71"/>
+    <path d="M120 470 Q400 430 680 470 L680 600 L120 600 Z" fill="#6e4520"/>
+    <ellipse cx="400" cy="505" rx="240" ry="30" fill="#8a5a2b"/>
+    <circle cx="180" cy="120" r="9" fill="#ffd98a"/><circle cx="640" cy="90" r="7" fill="#ffd98a"/><circle cx="700" cy="170" r="6" fill="#ffd98a"/>
+    </svg>`;
+  }
+  if(name==='candy'){
+    return `<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">${sky('#ffd9ec','#fff3f9')}${clouds}
+    <path d="M0 430 Q200 380 400 425 Q600 465 800 415 L800 600 L0 600 Z" fill="#ffb3d9"/>
+    <rect x="330" y="230" width="140" height="200" fill="#fff0f7"/><path d="M320 235 L400 150 L480 235 Z" fill="#f28bb4"/>
+    <rect x="280" y="290" width="60" height="140" fill="#fff0f7"/><path d="M272 295 L310 235 L348 295 Z" fill="#f28bb4"/>
+    <rect x="460" y="290" width="60" height="140" fill="#fff0f7"/><path d="M452 295 L490 235 L528 295 Z" fill="#f28bb4"/>
+    <rect x="382" y="350" width="36" height="80" rx="16" fill="#b96a00"/>
+    <circle cx="150" cy="380" r="30" fill="#ff5b8f"/><rect x="144" y="405" width="12" height="70" fill="#fff"/>
+    <circle cx="660" cy="360" r="36" fill="#7be495"/><rect x="654" y="390" width="12" height="80" fill="#fff"/>
+    <circle cx="90" cy="450" r="16" fill="#fff"/><circle cx="720" cy="470" r="20" fill="#fff"/></svg>`;
+  }
+  if(name==='ice'){
+    return `<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">${sky('#bfe3ff','#eaf7ff')}${clouds}
+    <path d="M0 440 L180 240 L320 440 Z" fill="#dff2ff"/><path d="M180 240 L225 310 L180 335 L140 305 Z" fill="#fff"/>
+    <path d="M480 440 L650 210 L800 440 Z" fill="#cfeaff"/><path d="M650 210 L700 290 L650 318 L605 285 Z" fill="#fff"/>
+    <rect y="435" width="800" height="165" fill="#f4fbff"/>
+    <rect x="350" y="300" width="100" height="140" fill="#a8d8ff"/><path d="M340 305 L400 240 L460 305 Z" fill="#7fc4ff"/>
+    <rect x="385" y="370" width="30" height="70" rx="14" fill="#3a7bd5"/>
+    <circle cx="120" cy="500" r="7" fill="#fff"/><circle cx="250" cy="530" r="5" fill="#fff"/><circle cx="600" cy="515" r="6" fill="#fff"/><circle cx="700" cy="545" r="5" fill="#fff"/></svg>`;
+  }
+  if(name==='swamp'){
+    return `<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">${sky('#9db98a','#d8e6c3')}${clouds}
+    <path d="M0 430 Q260 395 520 430 Q680 450 800 425 L800 600 L0 600 Z" fill="#6a994e"/>
+    <path d="M60 440 Q55 300 90 240 Q110 200 95 150" stroke="#4a3220" stroke-width="26" fill="none"/><path d="M95 200 Q160 160 210 175" stroke="#4a3220" stroke-width="14" fill="none"/>
+    <ellipse cx="120" cy="140" rx="95" ry="42" fill="#557d3c"/><ellipse cx="210" cy="165" rx="60" ry="30" fill="#557d3c"/>
+    <path d="M700 450 Q710 330 685 260" stroke="#4a3220" stroke-width="22" fill="none"/><ellipse cx="680" cy="235" rx="80" ry="36" fill="#557d3c"/>
+    <ellipse cx="400" cy="520" rx="330" ry="42" fill="#7fae5f"/>
+    <circle cx="300" cy="505" r="10" fill="#a8d88a"/><circle cx="520" cy="530" r="13" fill="#a8d88a"/><circle cx="620" cy="500" r="8" fill="#a8d88a"/></svg>`;
+  }
+  /* night */
+  return `<svg viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">${sky('#141433','#3a2a5e')}
+  <circle cx="660" cy="105" r="46" fill="#f5f0d8"/><circle cx="640" cy="92" r="40" fill="#141433" opacity=".25"/>
+  ${[[80,70],[180,140],[300,60],[420,120],[520,70],[740,190],[120,220],[560,180]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="#fff"/>`).join('')}
+  <path d="M0 450 Q220 400 430 445 Q620 480 800 435 L800 600 L0 600 Z" fill="#241a3d"/>
+  <path d="M330 445 L360 300 L400 360 L440 300 L470 445 Z" fill="#17102b"/>
+  <rect x="388" y="380" width="24" height="65" rx="11" fill="#0d0820"/><rect x="352" y="330" width="16" height="22" fill="#ffd98a"/><rect x="432" y="330" width="16" height="22" fill="#ffd98a"/></svg>`;
+}
+function setScene(name){ document.getElementById('sceneBg').innerHTML = sceneSvg(name); }
 
+/* ================= HERO ART (original) ================= */
 function heroSvg(kind){
-  const face = (skin, extra) => `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="${skin}"/><circle cx="39" cy="48" r="4" fill="#222"/><circle cx="61" cy="48" r="4" fill="#222"/><path d="M40 64 Q50 71 60 64" stroke="#222" stroke-width="3.5" fill="none" stroke-linecap="round"/>${extra}</svg>`;
+  const face = (skin, extra) => `<svg viewBox="0 0 100 100"><circle cx="50" cy="54" r="33" fill="${skin}"/><circle cx="39" cy="50" r="4" fill="#222"/><circle cx="61" cy="50" r="4" fill="#222"/><path d="M40 66 Q50 73 60 66" stroke="#222" stroke-width="3.5" fill="none" stroke-linecap="round"/>${extra}</svg>`;
   switch(kind){
-    case 'boy': return face('#ffd9a0', `<path d="M16 50 Q14 12 50 12 Q86 12 84 50 L74 50 Q76 24 50 24 Q24 24 26 50 Z" fill="#ffffff" stroke="#d9d9d9" stroke-width="2"/>`);
-    case 'dog': return `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="55" rx="30" ry="27" fill="#f7c948"/><ellipse cx="22" cy="42" rx="8" ry="18" fill="#e0a81e"/><ellipse cx="78" cy="42" rx="8" ry="18" fill="#e0a81e"/><circle cx="40" cy="50" r="4" fill="#222"/><circle cx="60" cy="50" r="4" fill="#222"/><ellipse cx="50" cy="62" rx="7" ry="5" fill="#222"/><path d="M42 72 Q50 78 58 72" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+    case 'boy': return face('#ffd9a0', `<path d="M15 54 Q12 10 50 10 Q88 10 85 54 L74 54 Q76 24 50 24 Q24 24 26 54 Z" fill="#ffffff" stroke="#d9d9d9" stroke-width="2"/><circle cx="26" cy="16" r="8" fill="#fff" stroke="#d9d9d9" stroke-width="2"/><circle cx="74" cy="16" r="8" fill="#fff" stroke="#d9d9d9" stroke-width="2"/>`);
+    case 'dog': return `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="56" rx="30" ry="27" fill="#f7c948"/><ellipse cx="21" cy="44" rx="8" ry="19" fill="#e0a81e"/><ellipse cx="79" cy="44" rx="8" ry="19" fill="#e0a81e"/><circle cx="40" cy="51" r="4" fill="#222"/><circle cx="60" cy="51" r="4" fill="#222"/><ellipse cx="50" cy="63" rx="7" ry="5" fill="#222"/><path d="M42 73 Q50 79 58 73" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
     case 'princess': return face('#ffb3d9', `<path d="M28 26 L36 10 L46 22 L50 8 L54 22 L64 10 L72 26 Z" fill="#f5a623" stroke="#c77f0a" stroke-width="2"/><circle cx="50" cy="20" r="4" fill="#e74c3c"/>`);
-    case 'vampire': return face('#e8e4f5', `<path d="M16 52 Q12 10 50 12 Q88 10 84 52 L76 52 Q78 26 50 24 Q22 26 24 52 Z" fill="#2b2b3d"/><path d="M44 68 L47 76 L50 68 M50 68 L53 76 L56 68" fill="#fff" stroke="#ccc"/>`);
-    case 'iceking': return face('#bfe3ff', `<path d="M26 28 L34 8 L44 22 L50 6 L56 22 L66 8 L74 28 Z" fill="#f5a623" stroke="#c77f0a" stroke-width="2"/><path d="M30 66 Q50 96 70 66 Q62 78 50 78 Q38 78 30 66" fill="#ffffff"/>`);
+    case 'vampire': return face('#e8e4f5', `<path d="M15 54 Q11 10 50 12 Q89 10 85 54 L76 54 Q78 26 50 24 Q22 26 24 54 Z" fill="#2b2b3d"/><path d="M43 69 L46 77 L50 69 M50 69 L54 77 L57 69" fill="#fff" stroke="#ccc"/>`);
+    case 'iceking': return face('#bfe3ff', `<path d="M26 28 L34 8 L44 22 L50 6 L56 22 L66 8 L74 28 Z" fill="#f5a623" stroke="#c77f0a" stroke-width="2"/><path d="M30 66 Q50 97 70 66 Q62 79 50 79 Q38 79 30 66" fill="#ffffff"/>`);
     case 'robot': return `<svg viewBox="0 0 100 100"><rect x="22" y="28" width="56" height="48" rx="10" fill="#b8c4ce"/><rect x="30" y="42" width="14" height="10" rx="3" fill="#223"/><rect x="56" y="42" width="14" height="10" rx="3" fill="#223"/><rect x="40" y="62" width="20" height="5" rx="2.5" fill="#223"/><line x1="50" y1="28" x2="50" y2="14" stroke="#8a97a3" stroke-width="4"/><circle cx="50" cy="11" r="5" fill="#e74c3c"/></svg>`;
   }
   return face('#ffd9a0','');
 }
 
+/* procedural monster sprite with 3D-ish shading */
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31 + s.charCodeAt(i))>>>0; return h; }
+function monsterSvg(card){
+  const h = hashStr(card.id);
+  const base = {corn:'#f2b705',blue:'#4a90d9',sand:'#e08a3c',swamp:'#6a994e',nice:'#f28bb4',ice:'#9fd8ff',any:'#b07fe8'}[card.land] || '#999';
+  const eyes = 1 + (h % 3);
+  const horn = card.tier>=3 ? `<path d="M28 26 L22 8 L36 18 Z" fill="#fff3c4"/><path d="M72 26 L78 8 L64 18 Z" fill="#fff3c4"/>` : (h%2 ? `<path d="M30 24 Q50 6 70 24" stroke="#5a3a1a" stroke-width="5" fill="none"/>` : '');
+  const crown = card.tier>=4 ? `<path d="M34 20 L40 6 L47 16 L50 4 L53 16 L60 6 L66 20 Z" fill="#ffd94d" stroke="#c77f0a" stroke-width="1.5"/>` : '';
+  const eyePos = eyes===1 ? [[50,48]] : eyes===2 ? [[38,48],[62,48]] : [[32,48],[50,42],[68,48]];
+  const eyesSvg = eyePos.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#fff"/><circle cx="${p[0]}" cy="${p[1]+1}" r="3" fill="#222"/>`).join('');
+  const mouth = h%3===0 ? `<path d="M40 66 Q50 74 60 66" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/>`
+    : h%3===1 ? `<path d="M40 64 L45 71 L50 64 L55 71 L60 64" stroke="#222" stroke-width="2.6" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="50" cy="67" rx="7" ry="4.5" fill="#222"/>`;
+  const gid = 'g'+card.id;
+  return `<svg viewBox="0 0 100 100"><defs><radialGradient id="${gid}" cx="38%" cy="30%" r="80%"><stop offset="0%" stop-color="#ffffff" stop-opacity=".55"/><stop offset="45%" stop-color="${base}"/><stop offset="100%" stop-color="${base}"/></radialGradient></defs>
+  <ellipse cx="50" cy="90" rx="30" ry="7" fill="rgba(0,0,0,.3)"/>
+  ${horn}${crown}
+  <path d="M22 82 Q16 34 50 26 Q84 34 78 82 Q64 90 50 90 Q36 90 22 82 Z" fill="url(#${gid})" stroke="rgba(0,0,0,.25)" stroke-width="2"/>
+  ${eyesSvg}${mouth}
+  <ellipse cx="34" cy="40" rx="9" ry="5" fill="#fff" opacity=".35" transform="rotate(-24 34 40)"/></svg>`;
+}
+
+/* land tile art */
+function landArt(land){
+  const bg = {corn:'#f7d154',blue:'#7db9ec',sand:'#f0b26b',swamp:'#8fbf6f',nice:'#ffc2dd',ice:'#d6f0ff'}[land] || '#ccc';
+  let art = '';
+  if(land==='corn') art = [18,42,66].map(x=>`<path d="M${x} 100 Q${x-4} 55 ${x} 22" stroke="#4a8f2a" stroke-width="5" fill="none"/><ellipse cx="${x}" cy="30" rx="7" ry="13" fill="#f5a623"/>`).join('');
+  else if(land==='blue') art = `<path d="M0 78 Q30 55 55 74 Q80 88 100 70 L100 100 L0 100 Z" fill="#5da244"/><ellipse cx="72" cy="26" rx="20" ry="8" fill="#fff" opacity=".85"/>`;
+  else if(land==='sand') art = `<path d="M0 82 Q35 62 65 78 Q85 88 100 76 L100 100 L0 100 Z" fill="#e8a04c"/><path d="M76 78 L76 44 M76 56 Q64 52 64 42 M76 62 Q88 58 88 48" stroke="#3f7d3a" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  else if(land==='swamp') art = `<path d="M14 100 Q12 55 24 30" stroke="#4a3220" stroke-width="8" fill="none"/><ellipse cx="26" cy="24" rx="20" ry="10" fill="#4a7d34"/><circle cx="62" cy="84" r="6" fill="#bfe3a0"/><circle cx="80" cy="92" r="4" fill="#bfe3a0"/>`;
+  else if(land==='nice') art = `<path d="M0 80 Q30 58 55 76 Q80 90 100 72 L100 100 L0 100 Z" fill="#f78fb8"/><circle cx="26" cy="66" r="5" fill="#fff"/><circle cx="70" cy="60" r="5" fill="#ffe28a"/><circle cx="50" cy="76" r="4" fill="#fff"/>`;
+  else if(land==='ice') art = `<path d="M8 100 L38 40 L62 100 Z" fill="#bfe6ff"/><path d="M38 40 L48 62 L38 70 L29 60 Z" fill="#fff"/><path d="M55 100 L78 55 L98 100 Z" fill="#a8d8ff"/>`;
+  return `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><rect width="100" height="100" fill="${bg}"/>${art}</svg>`;
+}
+
+/* ================= DATA ================= */
+const LANDS = {
+  corn:{name:'حقول الذرة',color:'#f2b705'}, blue:{name:'السهول الزرقاء',color:'#4a90d9'},
+  sand:{name:'الرمال',color:'#e08a3c'}, swamp:{name:'المستنقع',color:'#6a994e'},
+  nice:{name:'الأراضي اللطيفة',color:'#f28bb4'}, ice:{name:'أراضي الثلج',color:'#9fd8ff'}
+};
+
 const HEROES = [
-  {id:'boy',      name:'البطل',        desc:'مخلوقاتك كلها +1 في الهجوم', ability:'atk1'},
-  {id:'dog',      name:'الكلب السحري', desc:'مرة في الدور: العب مخلوقاً في أي أرض', ability:'freeLand'},
-  {id:'princess', name:'أميرة الحلوى', desc:'استرجع نقطة حياة في بداية دورك', ability:'regen1'},
-  {id:'vampire',  name:'ملكة الليل',   desc:'حين تضرب حياة الخصم تسترجع حياة', ability:'lifesteal'},
-  {id:'iceking',  name:'ملك الثلج',    desc:'جمّد أقوى مخلوق عند الخصم (كل 3 أدوار)', ability:'freeze'},
-  {id:'robot',    name:'الروبوت',      desc:'اسحب بطاقة إضافية في بداية دورك', ability:'draw1'}
+  {id:'boy', name:'البطل', land:'blue', ability:'atk1', pitch:1.3, desc:'مخلوقاتك كلها +1 في الهجوم',
+   lines:{start:'يلا نلعبو حرب البطاقات!', attack:'هجوم!', hurt:'آي! غادي نرجع!', win:'ربحت! وقت المغامرة!'}},
+  {id:'dog', name:'الكلب السحري', land:'corn', ability:'freeFloop', pitch:.8, desc:'أول قوة فلوب في كل دور بلا ما تكلف حركة',
+   lines:{start:'أنا ما كنخسرش في هاد اللعبة!', attack:'خذ هادي!', hurt:'هيه! غادي نتمدد ونرجع!', win:'قلتها ليك! أنا الملك!'}},
+  {id:'princess', name:'أميرة الحلوى', land:'nice', ability:'regen1', pitch:1.5, desc:'استرجع نقطة حياة في بداية دورك',
+   lines:{start:'العلم والحلوى غادي يربحو!', attack:'بكل أناقة... هجوم!', hurt:'أوه! ما يهمش!', win:'انتصار حلو!'}},
+  {id:'vampire', name:'ملكة الليل', land:'sand', ability:'lifesteal', pitch:1.1, desc:'حين تضرب حياة الخصم تسترجع حياة',
+   lines:{start:'الليل طويل... والمعركة أطول', attack:'اشرب من هاد الضربة!', hurt:'همم... مؤلم شوية', win:'الظلام انتصر'}},
+  {id:'iceking', name:'ملك الثلج', land:'ice', ability:'freeze', pitch:.7, desc:'جمّد أقوى مخلوق عند الخصم (كل 3 أدوار)',
+   lines:{start:'غادي نجمدكم كاملين!', attack:'عاصفة ثلجية!', hurt:'برد! برد بزاف!', win:'المملكة الثلجية انتصرت!'}},
+  {id:'robot', name:'الروبوت', land:'swamp', ability:'draw1', pitch:1.0, desc:'اسحب بطاقة إضافية في بداية دورك',
+   lines:{start:'بيب بوب! جاهز للمعركة!', attack:'تنفيذ الهجوم!', hurt:'خطأ! خطأ!', win:'النصر مؤكد بنسبة مئة بالمئة!'}}
+];
+const heroById = id => HEROES.find(h=>h.id===id);
+
+/* tiers: 1 basic, 2 strong, 3 elite, 4 legendary */
+const CARDS = [
+  /* ===== CORN ===== */
+  {id:'cn1', name:'مقاتل الذرة', type:'creature', land:'corn', tier:1, atk:3, def:3, floop:'buffAtk2', txt:'فلوب: +2 هجوم هذا الدور'},
+  {id:'cn2', name:'خنزير الحرب', type:'creature', land:'corn', tier:1, atk:4, def:2, txt:''},
+  {id:'cn3', name:'فرسان الذرة', type:'creature', land:'corn', tier:2, atk:4, def:4, txt:''},
+  {id:'cn4', name:'الرامي دان', type:'creature', land:'corn', tier:2, atk:3, def:3, floop:'dmg3lane', txt:'فلوب: 3 ضرر لمخلوق في نفس الطريق'},
+  {id:'cn5', name:'الخنزير', type:'creature', land:'corn', tier:2, atk:2, def:3, floop:'eatCorn', txt:'فلوب: ياكل ذرة الخصم ويدمر أقوى مخلوق ذرة عندو'},
+  {id:'cn6', name:'كلب الذرة', type:'creature', land:'corn', tier:3, atk:5, def:4, floop:'buffAtk2', txt:'فلوب: +2 هجوم هذا الدور'},
+  {id:'cn7', name:'ماشي الذرة الخالد', type:'creature', land:'corn', tier:4, atk:7, def:7, txt:'أسطوري!'},
+  {id:'cnb', name:'صومعة الحقيقة', type:'building', land:'corn', tier:2, txt:'اسحب بطاقة في بداية دورك'},
+  /* ===== BLUE ===== */
+  {id:'bl1', name:'فارس الماء', type:'creature', land:'blue', tier:1, atk:3, def:4, txt:''},
+  {id:'bl2', name:'العالم العتيق', type:'creature', land:'blue', tier:1, atk:2, def:3, floop:'draw2', txt:'فلوب: اسحب بطاقتين'},
+  {id:'bl3', name:'الكلب الرائع', type:'creature', land:'blue', tier:2, atk:3, def:3, floop:'blockFloop', txt:'فلوب: مخلوق الخصم في نفس الطريق ما يقدرش يتحرك'},
+  {id:'bl4', name:'تنين البحر', type:'creature', land:'blue', tier:2, atk:5, def:3, txt:''},
+  {id:'bl5', name:'فارس وحيد القرن', type:'creature', land:'blue', tier:3, atk:5, def:5, txt:''},
+  {id:'bl6', name:'حارس السهول', type:'creature', land:'blue', tier:3, atk:4, def:6, floop:'shield3', txt:'فلوب: +3 دفاع هذا الدور'},
+  {id:'bl7', name:'تنين السهول الأسطوري', type:'creature', land:'blue', tier:4, atk:8, def:6, txt:'أسطوري!'},
+  {id:'blb', name:'المدرسة', type:'building', land:'blue', tier:2, txt:'مخلوقات هذا الطريق +0/+2'},
+  /* ===== SAND ===== */
+  {id:'sa1', name:'عقرب الرمال', type:'creature', land:'sand', tier:1, atk:3, def:2, floop:'poison1', txt:'فلوب: 1 ضرر لمخلوق في نفس الطريق'},
+  {id:'sa2', name:'محارب الصحراء', type:'creature', land:'sand', tier:1, atk:4, def:4, txt:''},
+  {id:'sa3', name:'أفعى الرمال', type:'creature', land:'sand', tier:2, atk:4, def:3, floop:'poison1', txt:'فلوب: 1 ضرر لمخلوق في نفس الطريق'},
+  {id:'sa4', name:'مومياء الشاطئ', type:'creature', land:'sand', tier:2, atk:3, def:5, txt:''},
+  {id:'sa5', name:'القرش', type:'creature', land:'sand', tier:3, atk:6, def:4, txt:''},
+  {id:'sa6', name:'جني الرمال', type:'creature', land:'sand', tier:3, atk:4, def:6, floop:'def3', txt:'فلوب: +3 دفاع هذا الدور'},
+  {id:'sa7', name:'أبو الهول الحي', type:'creature', land:'sand', tier:4, atk:7, def:8, txt:'أسطوري!'},
+  {id:'sab', name:'معبد الرمال', type:'building', land:'sand', tier:2, txt:'مخلوقات هذا الطريق +2/+0'},
+  /* ===== SWAMP ===== */
+  {id:'sw1', name:'ضفدع سام', type:'creature', land:'swamp', tier:1, atk:2, def:2, floop:'dmg3lane', txt:'فلوب: 3 ضرر لمخلوق في نفس الطريق'},
+  {id:'sw2', name:'كرة الفم', type:'creature', land:'swamp', tier:1, atk:3, def:3, txt:''},
+  {id:'sw3', name:'خفاش العين', type:'creature', land:'swamp', tier:2, atk:3, def:4, floop:'discard', txt:'فلوب: الخصم يرمي بطاقة'},
+  {id:'sw4', name:'ساحرة المستنقع', type:'creature', land:'swamp', tier:2, atk:4, def:3, floop:'dmg2any', txt:'فلوب: 2 ضرر لأقوى مخلوق عدو'},
+  {id:'sw5', name:'وحش المستنقع', type:'creature', land:'swamp', tier:3, atk:6, def:6, txt:''},
+  {id:'sw6', name:'ملك العظام', type:'creature', land:'swamp', tier:4, atk:8, def:8, txt:'أسطوري!'},
+  {id:'swb', name:'برج الأرواح', type:'building', land:'swamp', tier:2, txt:'مخلوقات هذا الطريق +1/+1'},
+  /* ===== NICE ===== */
+  {id:'ni1', name:'وحيد القرن', type:'creature', land:'nice', tier:1, atk:3, def:3, floop:'heal3', txt:'فلوب: استرجع 3 حياة'},
+  {id:'ni2', name:'فارس الحلوى', type:'creature', land:'nice', tier:1, atk:4, def:3, txt:''},
+  {id:'ni3', name:'السيدة زغب', type:'creature', land:'nice', tier:2, atk:3, def:5, floop:'heal2', txt:'فلوب: استرجع 2 حياة'},
+  {id:'ni4', name:'ملاك الشوكولاتة', type:'creature', land:'nice', tier:3, atk:5, def:5, floop:'heal3', txt:'فلوب: استرجع 3 حياة'},
+  {id:'ni5', name:'حارسة الحلوى', type:'creature', land:'nice', tier:3, atk:4, def:7, txt:''},
+  {id:'ni6', name:'التنينة الحلوة', type:'creature', land:'nice', tier:4, atk:7, def:9, txt:'أسطوري!'},
+  {id:'nib', name:'كهف العزلة', type:'building', land:'nice', tier:2, txt:'مخلوقات هذا الطريق +0/+3'},
+  {id:'nib2', name:'طاحونة الصحة', type:'building', land:'nice', tier:2, txt:'استرجع 1 حياة في بداية دورك'},
+  /* ===== ICE ===== */
+  {id:'ic1', name:'رامي الثلج', type:'creature', land:'ice', tier:1, atk:3, def:3, floop:'dmg2any', txt:'فلوب: 2 ضرر لأقوى مخلوق عدو'},
+  {id:'ic2', name:'غول الثلج', type:'creature', land:'ice', tier:1, atk:4, def:5, txt:''},
+  {id:'ic3', name:'ذئب الجليد', type:'creature', land:'ice', tier:2, atk:5, def:3, txt:''},
+  {id:'ic4', name:'ساحر الجليد', type:'creature', land:'ice', tier:2, atk:3, def:4, floop:'freezeLane', txt:'فلوب: جمّد مخلوق الخصم في نفس الطريق'},
+  {id:'ic5', name:'عملاق الثلج', type:'creature', land:'ice', tier:3, atk:6, def:7, txt:''},
+  {id:'ic6', name:'تنين الجليد', type:'creature', land:'ice', tier:4, atk:8, def:7, txt:'أسطوري!'},
+  {id:'icb', name:'القصر البلوري', type:'building', land:'ice', tier:2, txt:'مخلوقات هذا الطريق +1/+2'},
+  /* ===== ANY / RAINBOW ===== */
+  {id:'an1', name:'التنين الصغير', type:'creature', land:'any', tier:2, atk:4, def:4, txt:'يلعب في أي أرض'},
+  {id:'an2', name:'فيليس', type:'creature', land:'any', tier:3, atk:5, def:6, floop:'heal2', txt:'فلوب: استرجع 2 حياة — يلعب في أي أرض'},
+  {id:'anb', name:'قلعة الدم', type:'building', land:'any', tier:3, txt:'مخلوقات هذا الطريق +2/+1'},
+  /* ===== SPELLS ===== */
+  {id:'sp1', name:'صاعقة', type:'spell', land:'any', tier:1, txt:'4 ضرر لأقوى مخلوق عدو'},
+  {id:'sp2', name:'شفاء', type:'spell', land:'any', tier:1, txt:'استرجع 5 حياة'},
+  {id:'sp3', name:'سحب سحري', type:'spell', land:'any', tier:1, txt:'اسحب بطاقتين'},
+  {id:'sp4', name:'عاصفة الدماغ', type:'spell', land:'any', tier:3, txt:'3 ضرر لكل مخلوقات الخصم'},
+  {id:'sp5', name:'البركان', type:'spell', land:'any', tier:3, txt:'دمر أقوى مخلوق عدو'}
+];
+const cardById = id => CARDS.find(c=>c.id===id);
+
+/* levels: place, scene, enemy hero, enemy hp, enemy tier cap */
+const LEVELS = [
+  {place:'بيت الشجرة', scene:'treefort', foe:'dog',      hp:25, tier:1},
+  {place:'بيت الشجرة', scene:'treefort', foe:'boy',      hp:27, tier:1},
+  {place:'مملكة الحلوى', scene:'candy',  foe:'princess', hp:29, tier:2},
+  {place:'المستنقع', scene:'swamp',      foe:'robot',    hp:31, tier:2},
+  {place:'أراضي الثلج', scene:'ice',     foe:'iceking',  hp:33, tier:3},
+  {place:'الرمال', scene:'swamp',        foe:'vampire',  hp:35, tier:3},
+  {place:'بيت الشجرة — الانتقام', scene:'treefort', foe:'dog', hp:37, tier:3},
+  {place:'مملكة الحلوى', scene:'candy',  foe:'princess', hp:39, tier:4},
+  {place:'قصر الليل', scene:'night',     foe:'vampire',  hp:41, tier:4},
+  {place:'المعركة الأخيرة', scene:'night', foe:'iceking', hp:45, tier:4}
 ];
 
-/* floop keys: buffAtk2, heal2, dmg2any, poison1, def3, dmg3lane, discard, heal3, shield3 */
-const CARDS = [
-  /* cornfield */
-  {id:'c1', name:'مقاتل الذرة', type:'creature', land:'corn', atk:3, def:3, floop:'buffAtk2', txt:'فلوب: +2 هجوم هذا الدور'},
-  {id:'c2', name:'خنزير الحرب', type:'creature', land:'corn', atk:4, def:2, txt:''},
-  {id:'c3', name:'روح الحقل',   type:'creature', land:'corn', atk:2, def:4, floop:'heal2', txt:'فلوب: استرجع 2 حياة'},
-  /* blue plains */
-  {id:'b1', name:'فارس الماء',     type:'creature', land:'blue', atk:3, def:4, txt:''},
-  {id:'b2', name:'تنين البحر',     type:'creature', land:'blue', atk:5, def:3, txt:''},
-  {id:'b3', name:'ساحر السهول',    type:'creature', land:'blue', atk:2, def:3, floop:'dmg2any', txt:'فلوب: 2 ضرر لأقوى مخلوق عدو'},
-  /* sandylands */
-  {id:'s1', name:'عقرب الرمال',   type:'creature', land:'sand', atk:3, def:2, floop:'poison1', txt:'فلوب: 1 ضرر لمخلوق في نفس الطريق'},
-  {id:'s2', name:'محارب الصحراء', type:'creature', land:'sand', atk:4, def:4, txt:''},
-  {id:'s3', name:'جني الرمال',    type:'creature', land:'sand', atk:3, def:5, floop:'def3', txt:'فلوب: +3 دفاع هذا الدور'},
-  /* swamp */
-  {id:'w1', name:'وحش المستنقع',  type:'creature', land:'swamp', atk:5, def:5, txt:''},
-  {id:'w2', name:'ضفدع سام',      type:'creature', land:'swamp', atk:2, def:2, floop:'dmg3lane', txt:'فلوب: 3 ضرر لمخلوق في نفس الطريق'},
-  {id:'w3', name:'ساحرة المستنقع',type:'creature', land:'swamp', atk:3, def:3, floop:'discard', txt:'فلوب: الخصم يرمي بطاقة'},
-  /* nicelands */
-  {id:'n1', name:'وحيد القرن',    type:'creature', land:'nice', atk:3, def:3, floop:'heal3', txt:'فلوب: استرجع 3 حياة'},
-  {id:'n2', name:'فارس الحلوى',   type:'creature', land:'nice', atk:4, def:3, txt:''},
-  {id:'n3', name:'ملاك الأراضي',  type:'creature', land:'nice', atk:2, def:5, floop:'shield3', txt:'فلوب: +3 دفاع هذا الدور'},
-  /* any land */
-  {id:'a1', name:'التنين الصغير', type:'creature', land:'any', atk:4, def:4, txt:'يلعب في أي أرض'},
-  /* buildings */
-  {id:'bd1', name:'برج الذرة',  type:'building', land:'corn',  txt:'مخلوقات هذا الطريق +1/+1'},
-  {id:'bd2', name:'قلعة الماء', type:'building', land:'blue',  txt:'مخلوقات هذا الطريق +0/+2'},
-  {id:'bd3', name:'معبد الرمال',type:'building', land:'sand',  txt:'مخلوقات هذا الطريق +2/+0'},
-  {id:'bd4', name:'بيت الحلوى', type:'building', land:'nice',  txt:'استرجع 1 حياة في بداية دورك'},
-  /* spells */
-  {id:'sp1', name:'صاعقة',      type:'spell', land:'any', txt:'4 ضرر لأقوى مخلوق عدو'},
-  {id:'sp2', name:'شفاء',       type:'spell', land:'any', txt:'استرجع 5 حياة'},
-  {id:'sp3', name:'عاصفة',      type:'spell', land:'any', txt:'2 ضرر لكل مخلوقات الخصم'},
-  {id:'sp4', name:'سحب سحري',   type:'spell', land:'any', txt:'اسحب بطاقتين'}
-];
-const cardById = id => CARDS.find(c => c.id === id);
+/* ================= SAVE / PROGRESSION ================= */
+let SAVE = {level:1, xp:0, hero:'boy', completed:0, wins:0, sound:true};
+try{ const s = localStorage.getItem('cw_save'); if(s) SAVE = Object.assign(SAVE, JSON.parse(s)); }catch(e){}
+function saveGame(){ try{ localStorage.setItem('cw_save', JSON.stringify(SAVE)); }catch(e){} }
+function xpNext(){ return 100 * SAVE.level; }
+function tierCapForLevel(lv){ return lv>=5?4 : lv>=3?3 : lv>=2?2 : 1; }
+function gainXp(n){
+  SAVE.xp += n; let leveled = false;
+  while(SAVE.xp >= xpNext()){ SAVE.xp -= xpNext(); SAVE.level++; leveled = true; }
+  saveGame(); return leveled;
+}
+
+/* ================= SOUND + VOICE ================= */
+let audioCtx = null;
+function beep(freq, dur, type, vol){
+  if(!SAVE.sound) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = type||'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||.12, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + (dur||.15));
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + (dur||.15));
+  }catch(e){}
+}
+const sfx = {
+  pop(){ beep(520,.09,'square',.08); },
+  hit(){ beep(140,.18,'sawtooth',.14); },
+  floop(){ beep(880,.12,'sine',.1); setTimeout(()=>beep(1175,.14,'sine',.1),70); },
+  win(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.22,'triangle',.13), i*130)); },
+  lose(){ [392,330,262].forEach((f,i)=>setTimeout(()=>beep(f,.25,'triangle',.12), i*160)); }
+};
+function speak(text, pitch){
+  if(!SAVE.sound || !('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ar-SA'; u.pitch = pitch||1; u.rate = 1.05;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function toggleSound(){
+  SAVE.sound = !SAVE.sound; saveGame();
+  document.getElementById('soundBtn').textContent = SAVE.sound ? '🔊' : '🔇';
+  if(!SAVE.sound && 'speechSynthesis' in window) speechSynthesis.cancel();
+}
+function say(fighterId, hero, kind){
+  const el = document.querySelector('#'+fighterId+' .bubble');
+  if(!el || !hero.lines[kind]) return;
+  el.textContent = hero.lines[kind];
+  el.classList.add('show');
+  speak(hero.lines[kind], hero.pitch);
+  setTimeout(()=>el.classList.remove('show'), 1900);
+}
 
 /* ================= STATE ================= */
-let selHero = 'boy';
-let mode = 'ai';
 let G = null;
-let selCard = null;      // index in current player's hand
-let selCreature = null;  // lane index of selected own creature
-let pendingPass = null;
-
+let selCard = null, selCreature = null, busy = false;
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-function buildDeck(){
-  const d = [];
-  CARDS.forEach(c => { d.push(c.id); if(c.type==='creature') d.push(c.id); });
-  return shuffle(d);
+
+function buildDeck(hero, tierCap){
+  const pool = CARDS.filter(c => c.tier<=tierCap && (c.land===hero.land || c.land==='any'));
+  const deck = [];
+  pool.forEach(c=>{
+    let n = c.type==='creature' ? (c.tier===1?3 : c.tier===2?2 : 1) : 1;
+    for(let i=0;i<n;i++) deck.push(c.id);
+  });
+  return shuffle(deck).slice(0,34);
 }
-function makeLanes(){
-  const keys = shuffle([...LAND_KEYS]).slice(0,4);
-  return keys.map(k => ({land:k, creature:null, building:null}));
-}
-function newPlayer(heroId, isAI){
-  const p = {hero:HEROES.find(h=>h.id===heroId), hp:25, deck:buildDeck(), hand:[], lanes:makeLanes(), actions:2, isAI:!!isAI, freeLandUsed:false, freezeCd:0};
+function newPlayer(heroId, tierCap, hp, isAI){
+  const hero = heroById(heroId);
+  const p = {hero, hp, maxHp:hp, deck:buildDeck(hero, tierCap), hand:[],
+    lanes:[0,1,2,3].map(()=>({land:hero.land, creature:null, building:null})),
+    actions:2, isAI:!!isAI, freeFloopUsed:false, freezeCd:0};
   for(let i=0;i<5;i++) draw(p);
   return p;
 }
 function draw(p){ if(p.deck.length) p.hand.push(p.deck.pop()); }
 function logMsg(m){ G.log.unshift(m); if(G.log.length>30) G.log.pop(); }
 
-/* stats with building + hero passive */
 function cAtk(p, lane){
   const c = lane.creature; if(!c) return 0;
   let a = c.atk + (c.buffAtk||0);
-  if(lane.building==='bd1') a+=1;
-  if(lane.building==='bd3') a+=2;
+  if(lane.building==='swb') a+=1;
+  if(lane.building==='sab') a+=2;
+  if(lane.building==='icb') a+=1;
+  if(lane.building==='anb') a+=2;
   if(p.hero.ability==='atk1') a+=1;
   return a;
 }
+function buildingDefBonus(lane){
+  let b = 0;
+  if(lane.building==='blb') b+=2;
+  if(lane.building==='swb') b+=1;
+  if(lane.building==='nib') b+=3;
+  if(lane.building==='icb') b+=2;
+  if(lane.building==='anb') b+=1;
+  return b;
+}
 function cDef(p, lane){
   const c = lane.creature; if(!c) return 0;
-  let d = c.hp + (c.buffDef||0);
-  if(lane.building==='bd1') d+=1;
-  if(lane.building==='bd2') d+=2;
-  return d;
+  return c.hp + (c.buffDef||0) + buildingDefBonus(lane);
 }
 function hurtCreature(owner, lane, dmg){
   const c = lane.creature; if(!c) return;
-  c.hp -= dmg;
-  if(c.hp <= 0){
-    logMsg(`مات <b>${c.name}</b>`);
-    lane.creature = null;
-  }
+  const bonus = buildingDefBonus(lane);
+  const pool = c.hp + (c.buffDef||0) + bonus - dmg;
+  if(pool<=0){ logMsg(`مات <b>${c.name}</b>`); lane.creature = null; return; }
+  c.buffDef = Math.min(c.buffDef||0, Math.max(0, pool - bonus));
+  c.hp = pool - bonus - c.buffDef;
 }
 function strongestEnemyCreature(pIdx){
-  const foe = G.players[1-pIdx];
-  let best = null;
-  foe.lanes.forEach((l,i)=>{ if(l.creature && (!best || cAtk(foe,l) > cAtk(foe, foe.lanes[best]))) best = i; });
+  const foe = G.players[1-pIdx]; let best = null;
+  foe.lanes.forEach((l,i)=>{ if(l.creature && (best===null || cAtk(foe,l) > cAtk(foe, foe.lanes[best]))) best = i; });
   return best;
 }
-function checkEnd(){
-  const [a,b] = G.players;
-  if(a.hp<=0 || b.hp<=0){
-    const winner = a.hp<=0 ? b : a;
-    document.getElementById('endTitle').textContent = winner.isAI ? 'خسرت المعركة' : 'ربحت المعركة!';
-    document.getElementById('endText').textContent = `الفائز: ${winner.hero.name} — بقيت عندو ${Math.max(0,winner.hp)} نقطة حياة.`;
-    document.getElementById('endOverlay').classList.add('on');
-    G.over = true;
-    return true;
-  }
-  return false;
-}
-
-/* ================= ACTIONS ================= */
 function canPlayOn(p, card, lane){
-  if(card.type==='creature'){
-    if(lane.creature) return false;
-    if(card.land==='any') return true;
-    if(p.hero.ability==='freeLand' && !p.freeLandUsed) return true;
-    return lane.land === card.land;
-  }
-  if(card.type==='building'){
-    if(lane.building) return false;
-    return lane.land === card.land;
-  }
+  if(card.type==='creature') return !lane.creature && (card.land==='any' || lane.land===card.land);
+  if(card.type==='building') return !lane.building && (card.land==='any' || lane.land===card.land);
   return false;
 }
 function playCard(pIdx, handIdx, laneIdx){
   const p = G.players[pIdx];
   const card = cardById(p.hand[handIdx]);
   if(p.actions<=0) return false;
-  if(card.type==='spell'){
-    p.hand.splice(handIdx,1); p.actions--;
-    castSpell(pIdx, card);
-    return true;
-  }
+  if(card.type==='spell'){ p.hand.splice(handIdx,1); p.actions--; castSpell(pIdx, card); return true; }
   const lane = p.lanes[laneIdx];
   if(!canPlayOn(p, card, lane)) return false;
   p.hand.splice(handIdx,1); p.actions--;
   if(card.type==='creature'){
-    if(p.hero.ability==='freeLand' && card.land!=='any' && lane.land!==card.land) p.freeLandUsed = true;
-    lane.creature = {id:card.id, name:card.name, atk:card.atk, hp:card.def, floop:card.floop||null, flooped:false, frozen:false, buffAtk:0, buffDef:0};
-    logMsg(`<b>${p.hero.name}</b> لعب ${card.name}`);
+    lane.creature = {id:card.id, name:card.name, atk:card.atk, hp:card.def, floop:card.floop||null, flooped:false, frozen:false, buffAtk:0, buffDef:0, justPlayed:true};
+    logMsg(`<b>${p.hero.name}</b> استدعى ${card.name}`);
   } else {
     lane.building = card.id;
     logMsg(`<b>${p.hero.name}</b> بنى ${card.name}`);
   }
+  sfx.pop();
   return true;
 }
 function castSpell(pIdx, card){
   const p = G.players[pIdx], foe = G.players[1-pIdx];
   logMsg(`<b>${p.hero.name}</b> استعمل ${card.name}`);
-  if(card.id==='sp1'){
-    const t = strongestEnemyCreature(pIdx);
-    if(t!==null) hurtCreature(foe, foe.lanes[t], 4);
-  } else if(card.id==='sp2'){
-    p.hp = Math.min(25, p.hp+5);
-  } else if(card.id==='sp3'){
-    foe.lanes.forEach(l => { if(l.creature) hurtCreature(foe, l, 2); });
-  } else if(card.id==='sp4'){
-    draw(p); draw(p);
-  }
+  sfx.floop();
+  if(card.id==='sp1'){ const t=strongestEnemyCreature(pIdx); if(t!==null) hurtCreature(foe, foe.lanes[t], 4); }
+  else if(card.id==='sp2'){ p.hp = Math.min(p.maxHp, p.hp+5); }
+  else if(card.id==='sp3'){ draw(p); draw(p); }
+  else if(card.id==='sp4'){ foe.lanes.forEach(l=>{ if(l.creature) hurtCreature(foe, l, 3); }); }
+  else if(card.id==='sp5'){ const t=strongestEnemyCreature(pIdx); if(t!==null){ logMsg(`البركان دمر <b>${foe.lanes[t].creature.name}</b>`); foe.lanes[t].creature=null; } }
 }
 function floop(pIdx, laneIdx){
   const p = G.players[pIdx], foe = G.players[1-pIdx];
   const lane = p.lanes[laneIdx], c = lane.creature;
-  if(!c || !c.floop || c.flooped || p.actions<=0) return false;
-  c.flooped = true; p.actions--;
+  if(!c || !c.floop || c.flooped) return false;
+  const free = p.hero.ability==='freeFloop' && !p.freeFloopUsed;
+  if(p.actions<=0 && !free) return false;
+  if(free) p.freeFloopUsed = true; else p.actions--;
+  c.flooped = true;
   logMsg(`<b>${c.name}</b> استعمل قوتو`);
+  sfx.floop();
   switch(c.floop){
     case 'buffAtk2': c.buffAtk += 2; break;
-    case 'def3': case 'shield3': c.buffDef += 3; c.hp += 0; break;
-    case 'heal2': p.hp = Math.min(25, p.hp+2); break;
-    case 'heal3': p.hp = Math.min(25, p.hp+3); break;
-    case 'dmg2any': { const t = strongestEnemyCreature(pIdx); if(t!==null) hurtCreature(foe, foe.lanes[t], 2); } break;
+    case 'def3': case 'shield3': c.buffDef += 3; break;
+    case 'heal2': p.hp = Math.min(p.maxHp, p.hp+2); break;
+    case 'heal3': p.hp = Math.min(p.maxHp, p.hp+3); break;
+    case 'draw2': draw(p); draw(p); break;
+    case 'dmg2any': { const t=strongestEnemyCreature(pIdx); if(t!==null) hurtCreature(foe, foe.lanes[t], 2); } break;
     case 'poison1': if(foe.lanes[laneIdx].creature) hurtCreature(foe, foe.lanes[laneIdx], 1); break;
     case 'dmg3lane': if(foe.lanes[laneIdx].creature) hurtCreature(foe, foe.lanes[laneIdx], 3); break;
     case 'discard': if(foe.hand.length) foe.hand.splice(Math.floor(Math.random()*foe.hand.length),1); break;
+    case 'blockFloop': if(foe.lanes[laneIdx].creature) foe.lanes[laneIdx].creature.flooped = true; break;
+    case 'freezeLane': if(foe.lanes[laneIdx].creature) foe.lanes[laneIdx].creature.frozen = true; break;
+    case 'eatCorn': {
+      let best=null;
+      foe.lanes.forEach((l,i)=>{ if(l.creature && cardById(l.creature.id).land==='corn' && (best===null || cAtk(foe,l)>cAtk(foe,foe.lanes[best]))) best=i; });
+      if(best!==null){ logMsg(`الخنزير كلا ذرة <b>${foe.lanes[best].creature.name}</b> وطاح!`); foe.lanes[best].creature=null; }
+      else { const t=strongestEnemyCreature(pIdx); if(t!==null) hurtCreature(foe, foe.lanes[t], 3); }
+    } break;
   }
   return true;
 }
-function doAttack(){
-  if(!G || G.over) return;
-  const pIdx = G.turn, p = G.players[pIdx], foe = G.players[1-pIdx];
-  let playerDmg = 0;
-  p.lanes.forEach((lane,i)=>{
-    const c = lane.creature;
-    if(!c || c.flooped || c.frozen) return;
+function useHeroAbility(){
+  if(busy || !G || G.over || G.turn!==0) return;
+  const p = G.players[0];
+  if(p.hero.ability!=='freeze' || p.freezeCd>0 || p.actions<=0) return;
+  const t = strongestEnemyCreature(0);
+  if(t===null) return;
+  G.players[1].lanes[t].creature.frozen = true;
+  p.freezeCd = 3; p.actions--;
+  logMsg(`<b>${p.hero.name}</b> جمّد ${G.players[1].lanes[t].creature.name}`);
+  sfx.floop();
+  render();
+}
+function startTurn(pIdx){
+  const p = G.players[pIdx];
+  p.actions = 2; p.freeFloopUsed = false;
+  if(p.freezeCd>0) p.freezeCd--;
+  p.lanes.forEach(l=>{
+    if(l.creature){ l.creature.flooped=false; l.creature.buffAtk=0; l.creature.buffDef=0; l.creature.justPlayed=false; }
+    if(l.building==='nib2') p.hp = Math.min(p.maxHp, p.hp+1);
+    if(l.building==='cnb') draw(p);
+  });
+  G.players[1-pIdx].lanes.forEach(l=>{ if(l.creature) l.creature.frozen=false; });
+  draw(p);
+  if(p.hero.ability==='regen1') p.hp = Math.min(p.maxHp, p.hp+1);
+  if(p.hero.ability==='draw1') draw(p);
+  logMsg(`— دور <b>${p.hero.name}</b> —`);
+}
+
+/* animated attack sequence */
+function laneEl(side, i){ return document.querySelector(`#${side}Lanes .lane[data-i="${i}"]`); }
+function floatText(el, txt, cls){
+  if(!el) return;
+  const s = document.createElement('span');
+  s.className = 'dmg-float ' + (cls||''); s.textContent = txt;
+  el.appendChild(s); setTimeout(()=>s.remove(), 1000);
+}
+async function attackSeq(pIdx){
+  const p = G.players[pIdx], foe = G.players[1-pIdx];
+  const mySide = pIdx===0 ? 'my' : 'foe', foeSide = pIdx===0 ? 'foe' : 'my';
+  let playerDmg = 0, attacked = false;
+  for(let i=0;i<4;i++){
+    const lane = p.lanes[i], c = lane.creature;
+    if(!c || c.flooped || c.frozen) continue;
+    attacked = true;
     const atk = cAtk(p, lane);
     const foeLane = foe.lanes[i];
+    const myEl = laneEl(mySide, i)?.querySelector('.monster');
+    if(myEl){ myEl.classList.add(pIdx===0?'lunge-up':'lunge-down'); }
+    sfx.hit();
+    await sleep(240);
     if(foeLane.creature){
       const defAtk = cAtk(foe, foeLane);
+      const foeEl = laneEl(foeSide, i)?.querySelector('.monster');
+      if(foeEl) foeEl.classList.add('shake');
+      floatText(laneEl(foeSide,i), '-'+atk);
+      floatText(laneEl(mySide,i), '-'+defAtk);
       logMsg(`<b>${c.name}</b> هاجم ${foeLane.creature.name}`);
       hurtCreature(foe, foeLane, atk);
       hurtCreature(p, lane, defAtk);
     } else {
       foe.hp -= atk; playerDmg += atk;
+      floatText(document.getElementById(pIdx===0?'foeFighter':'myFighter'), '-'+atk);
+      const fEl = document.getElementById(pIdx===0?'foeFighter':'myFighter');
+      fEl.classList.add('shake'); setTimeout(()=>fEl.classList.remove('shake'), 480);
       logMsg(`<b>${c.name}</b> ضرب ${foe.hero.name} بـ${atk}`);
+      if(Math.random()<.5) say(pIdx===0?'foeFighter':'myFighter', foe.hero, 'hurt');
     }
     c.flooped = true;
-  });
+    await sleep(320);
+    render();
+    if(checkEnd()) return;
+  }
+  if(attacked) say(pIdx===0?'myFighter':'foeFighter', p.hero, 'attack');
   if(p.hero.ability==='lifesteal' && playerDmg>0){
-    p.hp = Math.min(25, p.hp + Math.min(3, playerDmg));
+    const heal = Math.min(3, playerDmg);
+    p.hp = Math.min(p.maxHp, p.hp+heal);
+    floatText(document.getElementById(pIdx===0?'myFighter':'foeFighter'), '+'+heal, 'heal');
   }
   render();
-  checkEnd();
 }
-function useHeroAbility(){
-  const pIdx = G.turn, p = G.players[pIdx];
-  if(p.hero.ability!=='freeze' || p.freezeCd>0 || p.actions<=0) return;
-  const t = strongestEnemyCreature(pIdx);
-  if(t===null) return;
-  G.players[1-pIdx].lanes[t].creature.frozen = true;
-  p.freezeCd = 3; p.actions--;
-  logMsg(`<b>${p.hero.name}</b> جمّد ${G.players[1-pIdx].lanes[t].creature.name}`);
-  render();
-}
-function startTurn(pIdx){
-  const p = G.players[pIdx];
-  p.actions = 2; p.freeLandUsed = false;
-  if(p.freezeCd>0) p.freezeCd--;
-  p.lanes.forEach(l=>{
-    if(l.creature){ l.creature.flooped=false; l.creature.buffAtk=0; l.creature.buffDef=0; }
-    if(l.building==='bd4') p.hp = Math.min(25, p.hp+1);
-  });
-  /* unfreeze creatures frozen last round */
-  G.players[1-pIdx].lanes.forEach(l=>{ if(l.creature) l.creature.frozen=false; });
-  draw(p);
-  if(p.hero.ability==='regen1') p.hp = Math.min(25, p.hp+1);
-  if(p.hero.ability==='draw1') draw(p);
-  logMsg(`— دور <b>${p.hero.name}</b> —`);
-}
-function endTurn(){
-  if(!G || G.over) return;
-  selCard = null; selCreature = null;
-  G.turn = 1 - G.turn;
-  startTurn(G.turn);
-  if(mode==='local'){
-    pendingPass = G.turn;
-    document.getElementById('passTitle').textContent = 'مرر التيليفون';
-    document.getElementById('passText').textContent = `الدور ديال ${G.players[G.turn].hero.name}. مرر التيليفون ليه واضغط أنا جاهز.`;
-    document.getElementById('passOverlay').classList.add('on');
-    render(true);
-    return;
+function checkEnd(){
+  if(!G || G.over) return true;
+  const [a,b] = G.players;
+  if(a.hp<=0 || b.hp<=0){
+    G.over = true;
+    const won = b.hp<=0;
+    const lvl = LEVELS[G.levelIdx];
+    let rewardTxt = '', leveled = false;
+    if(won){
+      const xp = 50 + G.levelIdx*15;
+      leveled = gainXp(xp);
+      SAVE.wins++;
+      if(G.levelIdx >= SAVE.completed) SAVE.completed = G.levelIdx+1;
+      saveGame();
+      rewardTxt = `+${xp} خبرة` + (leveled ? ` — طلعتي للمستوى ${SAVE.level}! بطاقات أقوى في الرزمة` : '');
+      sfx.win();
+      say('myFighter', a.hero, 'win');
+    } else {
+      gainXp(15);
+      rewardTxt = '+15 خبرة — عاود المحاولة!';
+      sfx.lose();
+    }
+    document.getElementById('endTitle').textContent = won ? 'ربحت المعركة!' : 'خسرت المعركة';
+    document.getElementById('endText').textContent = won
+      ? `${b.hero.name} غادي يشرب الصودا المقززة!`
+      : `${a.hero.name} خسر... الصودا المقززة من نصيبك هاد المرة.`;
+    document.getElementById('endReward').textContent = rewardTxt;
+    document.getElementById('nextBtn').style.display = (won && G.levelIdx < LEVELS.length-1) ? '' : 'none';
+    setTimeout(()=>document.getElementById('endOverlay').classList.add('on'), 700);
+    renderMenu();
+    return true;
   }
-  render();
-  if(G.players[G.turn].isAI) setTimeout(aiTurn, 700);
-}
-function confirmPass(){
-  document.getElementById('passOverlay').classList.remove('on');
-  pendingPass = null;
-  render();
+  return false;
 }
 
 /* ================= AI ================= */
-function aiTurn(){
+async function aiTurn(){
   if(!G || G.over) return;
-  const pIdx = G.turn, p = G.players[pIdx];
+  busy = true; render();
+  await sleep(650);
+  const pIdx = 1, p = G.players[1], foe = G.players[0];
   let guard = 0;
-  while(p.actions>0 && guard++<10){
-    /* play strongest playable creature first */
+  while(p.actions>0 && guard++<10 && !G.over){
     let best = null;
     p.hand.forEach((cid,hi)=>{
       const card = cardById(cid);
       if(card.type!=='creature') return;
-      p.lanes.forEach((lane,li)=>{
-        if(canPlayOn(p,card,lane) && (!best || card.atk>best.atk)) best = {hi,li,atk:card.atk};
-      });
+      p.lanes.forEach((lane,li)=>{ if(canPlayOn(p,card,lane) && (!best || card.atk>best.atk)) best={hi,li,atk:card.atk}; });
     });
-    if(best){ playCard(pIdx, best.hi, best.li); continue; }
-    /* play a building */
+    if(best){ playCard(pIdx,best.hi,best.li); render(); popAt('foe',best.li); await sleep(480); continue; }
     let built = false;
-    p.hand.forEach((cid,hi)=>{
-      if(built) return;
-      const card = cardById(cid);
-      if(card.type!=='building') return;
-      p.lanes.forEach((lane,li)=>{ if(!built && canPlayOn(p,card,lane)){ playCard(pIdx,hi,li); built=true; } });
-    });
-    if(built) continue;
-    /* spells: bolt if enemy has a big creature, heal if hurt, storm if 2+ enemies */
+    p.hand.forEach((cid,hi)=>{ if(built) return; const card=cardById(cid); if(card.type!=='building') return;
+      p.lanes.forEach((lane,li)=>{ if(!built && canPlayOn(p,card,lane)){ playCard(pIdx,hi,li); built=true; } }); });
+    if(built){ render(); await sleep(420); continue; }
     let cast = false;
-    const foe = G.players[1-pIdx];
     const foeCount = foe.lanes.filter(l=>l.creature).length;
-    p.hand.forEach((cid,hi)=>{
-      if(cast) return;
+    p.hand.forEach((cid,hi)=>{ if(cast) return;
       if(cid==='sp1' && strongestEnemyCreature(pIdx)!==null){ playCard(pIdx,hi,0); cast=true; }
-      else if(cid==='sp2' && p.hp<=17){ playCard(pIdx,hi,0); cast=true; }
-      else if(cid==='sp3' && foeCount>=2){ playCard(pIdx,hi,0); cast=true; }
-      else if(cid==='sp4'){ playCard(pIdx,hi,0); cast=true; }
-    });
-    if(cast) continue;
-    /* floop damage/heal abilities */
+      else if(cid==='sp2' && p.hp<=p.maxHp-8){ playCard(pIdx,hi,0); cast=true; }
+      else if(cid==='sp4' && foeCount>=2){ playCard(pIdx,hi,0); cast=true; }
+      else if(cid==='sp5' && strongestEnemyCreature(pIdx)!==null){ playCard(pIdx,hi,0); cast=true; }
+      else if(cid==='sp3'){ playCard(pIdx,hi,0); cast=true; } });
+    if(cast){ render(); await sleep(480); continue; }
     let fl = false;
-    p.lanes.forEach((lane,li)=>{
-      if(fl || !lane.creature || !lane.creature.floop || lane.creature.flooped) return;
+    p.lanes.forEach((lane,li)=>{ if(fl || !lane.creature || !lane.creature.floop || lane.creature.flooped) return;
       const k = lane.creature.floop;
-      if(['dmg2any','dmg3lane','poison1'].includes(k) && (strongestEnemyCreature(pIdx)!==null || foe.lanes[li].creature)){ floop(pIdx,li); fl=true; }
-      else if((k==='heal2'||k==='heal3') && p.hp<=19){ floop(pIdx,li); fl=true; }
-      else if(k==='buffAtk2'){ floop(pIdx,li); fl=true; }
-      else if(k==='discard' && foe.hand.length){ floop(pIdx,li); fl=true; }
-    });
-    if(fl) continue;
+      if(['dmg2any','dmg3lane','poison1','eatCorn','freezeLane','blockFloop'].includes(k) && (strongestEnemyCreature(pIdx)!==null || foe.lanes[li].creature)){ floop(pIdx,li); fl=true; }
+      else if((k==='heal2'||k==='heal3') && p.hp<=p.maxHp-6){ floop(pIdx,li); fl=true; }
+      else if(k==='buffAtk2' || k==='draw2'){ floop(pIdx,li); fl=true; }
+      else if(k==='discard' && foe.hand.length){ floop(pIdx,li); fl=true; } });
+    if(fl){ render(); spinAt('foe', p.lanes.findIndex(l=>l.creature&&l.creature.flooped)); await sleep(500); continue; }
     break;
   }
-  render();
-  setTimeout(()=>{ if(!checkEnd()){ doAttack(); setTimeout(()=>{ if(!G.over) endTurn(); }, 600); } }, 500);
+  if(!G.over){ await attackSeq(1); }
+  busy = false;
+  if(!G.over){ G.turn = 0; startTurn(0); render(); }
 }
+function popAt(side, i){ const el = laneEl(side,i)?.querySelector('.monster'); if(el) el.classList.add('pop'); }
+function spinAt(side, i){ if(i<0) return; const el = laneEl(side,i)?.querySelector('.monster'); if(el) el.classList.add('spin'); }
 
 /* ================= RENDER ================= */
-function creatureHtml(p, lane, laneIdx, mine){
-  const c = lane.creature;
-  if(!c) return `<div class="empty-lane">·</div>`;
-  const cls = ['creature', c.flooped?'flooped':'', c.frozen?'frozen':'', (mine && selCreature===laneIdx)?'sel':''].join(' ');
-  const click = mine ? `onclick="clickCreature(${laneIdx})"` : '';
-  return `<div class="${cls}" ${click}>
-    <div class="cn">${c.name}${c.frozen?' ❄':''}</div>
-    <div class="stats"><span class="atk">⚔ ${cAtk(p,lane)}</span><span class="def">🛡 ${cDef(p,lane)}</span></div>
-    ${c.floop?`<div class="fl">فلوب: ${cardById(c.id).txt.replace('فلوب: ','')}</div>`:''}
-  </div>`;
+function fighterHtml(p){
+  const pct = Math.max(0, Math.round(p.hp/p.maxHp*100));
+  return `<div class="bubble"></div>${heroSvg(p.hero.id)}<div class="fname">${p.hero.name}</div>
+  <div class="hpbar"><div style="width:${pct}%"></div></div><div class="hpnum">${Math.max(0,p.hp)} / ${p.maxHp}</div>`;
 }
 function lanesHtml(p, mine){
   return p.lanes.map((lane,i)=>{
     const land = LANDS[lane.land];
     let target = '';
-    if(mine && selCard!==null){
-      const card = cardById(G.players[G.turn].hand[selCard]);
-      if(card && card.type!=='spell' && canPlayOn(G.players[G.turn], card, lane)) target = 'target';
+    if(mine && selCard!==null && G.turn===0){
+      const card = cardById(G.players[0].hand[selCard]);
+      if(card && card.type!=='spell' && canPlayOn(G.players[0], card, lane)) target = 'target';
     }
     const click = mine ? `onclick="clickLane(${i})"` : '';
-    const bName = lane.building ? cardById(lane.building).name : '';
-    return `<div class="lane ${target}" style="background:${land.color}cc" ${click}>
-      <div class="land-name">${land.name}</div>
-      ${creatureHtml(p, lane, i, mine)}
-      ${bName?`<div class="building">🏰 ${bName}</div>`:''}
+    const c = lane.creature;
+    const cHtml = c ? `<div class="monster ${c.flooped?'flooped':''} ${c.frozen?'frozen':''} ${mine&&selCreature===i?'sel':''}" ${mine?`onclick="event.stopPropagation();clickCreature(${i})"`:''}>
+        <span class="sprite">${monsterSvg(cardById(c.id))}</span><div class="holo-ring"></div>
+        <div class="plate">${c.name}${c.frozen?' ❄':''}<br><span class="a">⚔${cAtk(p,lane)}</span> <span class="d">🛡${cDef(p,lane)}</span></div>
+      </div>` : `<div class="empty-lane">·</div>`;
+    return `<div class="lane ${target}" data-i="${i}" ${click}>
+      <div class="land-art">${landArt(lane.land)}</div>
+      <div class="land-name">${land.name}</div>${cHtml}
+      ${lane.building?`<div class="building">🏰 ${cardById(lane.building).name}</div>`:''}
     </div>`;
   }).join('');
 }
-function barHtml(p, label){
-  return `${heroSvg(p.hero.id)}<div><div class="pname">${p.hero.name}${label?' — '+label:''}</div><div class="hp">${Math.max(0,p.hp)} <small>نقطة حياة</small></div></div><div class="hand-count">بطاقات: ${p.hand.length} · رزمة: ${p.deck.length}</div>`;
-}
-function render(hideHand){
+function render(){
   if(!G) return;
-  const cur = G.players[G.turn], foe = G.players[1-G.turn];
-  const myIdx = mode==='ai' ? 0 : G.turn;
-  const me = G.players[myIdx], opp = G.players[1-myIdx];
-  document.getElementById('oppBar').innerHTML = barHtml(opp, opp.isAI?'الذكاء الاصطناعي':'');
-  document.getElementById('myBar').innerHTML = barHtml(me, '');
-  document.getElementById('oppLanes').innerHTML = lanesHtml(opp, false);
-  document.getElementById('myLanes').innerHTML = lanesHtml(me, mode!=='ai' || G.turn===0);
-  document.getElementById('turnInfo').textContent = `الدور: ${cur.hero.name}`;
-  document.getElementById('actionsInfo').textContent = `حركات باقية: ${cur.actions}`;
-  const myTurn = mode==='ai' ? G.turn===0 : true;
-  document.getElementById('attackBtn').disabled = !myTurn || !!pendingPass;
-  document.getElementById('endBtn').disabled = !myTurn || !!pendingPass;
+  const me = G.players[0], foe = G.players[1];
+  document.getElementById('foeFighter').innerHTML = fighterHtml(foe);
+  document.getElementById('myFighter').innerHTML = fighterHtml(me);
+  document.getElementById('foeLanes').innerHTML = lanesHtml(foe, false);
+  document.getElementById('myLanes').innerHTML = lanesHtml(me, true);
+  document.getElementById('placeName').textContent = LEVELS[G.levelIdx].place;
+  document.getElementById('turnInfo').textContent = `الدور: ${G.players[G.turn].hero.name}`;
+  document.getElementById('actionsInfo').textContent = `حركات: ${G.players[G.turn].actions}`;
+  const myTurn = G.turn===0 && !busy && !G.over;
+  document.getElementById('attackBtn').disabled = !myTurn;
+  document.getElementById('endBtn').disabled = !myTurn;
   const hb = document.getElementById('heroAbilityBtn');
-  if(cur.hero.ability==='freeze' && myTurn && !pendingPass){
+  if(me.hero.ability==='freeze'){
     hb.style.display = '';
-    hb.disabled = cur.freezeCd>0 || cur.actions<=0;
-    hb.textContent = cur.freezeCd>0 ? `التجميد (${cur.freezeCd})` : 'جمّد مخلوقاً';
+    hb.disabled = !myTurn || me.freezeCd>0 || me.actions<=0;
+    hb.textContent = me.freezeCd>0 ? `التجميد (${me.freezeCd})` : 'جمّد مخلوقاً';
   } else hb.style.display = 'none';
-  /* hand */
-  const handEl = document.getElementById('hand');
-  if(hideHand || pendingPass){ handEl.innerHTML = ''; }
-  else{
-    handEl.innerHTML = me.hand.map((cid,i)=>{
-      const c = cardById(cid);
-      const landColor = c.land==='any' ? '#999' : LANDS[c.land].color;
-      const landName = c.land==='any' ? 'أي أرض' : LANDS[c.land].name;
-      const typeName = c.type==='creature' ? 'مخلوق' : c.type==='building' ? 'مبنى' : 'تعويذة';
-      return `<div class="card ${selCard===i?'sel':''}" style="border-top-color:${landColor}" onclick="clickCard(${i})">
-        <span class="land-tag">${landName}</span>
-        <div class="cn">${c.name}</div><div class="ct">${typeName}</div>
-        ${c.type==='creature'?`<div class="stats"><span class="atk">⚔ ${c.atk}</span><span class="def">🛡 ${c.def}</span></div>`:''}
-        <div class="txt">${c.txt||''}</div>
-      </div>`;
-    }).join('');
-  }
+  document.getElementById('hand').innerHTML = me.hand.map((cid,i)=>{
+    const c = cardById(cid);
+    const landColor = c.land==='any' ? '#999' : LANDS[c.land].color;
+    const landName = c.land==='any' ? 'قوس قزح' : LANDS[c.land].name;
+    const typeName = c.type==='creature' ? 'مخلوق' : c.type==='building' ? 'مبنى' : 'تعويذة';
+    const stars = '★'.repeat(c.tier);
+    return `<div class="card ${selCard===i?'sel':''}" style="border-top-color:${landColor}" onclick="clickCard(${i})">
+      <span class="land-tag">${landName}</span>
+      <div class="cn">${c.name}</div><div class="ct">${typeName} <span class="tier">${stars}</span></div>
+      ${c.type==='creature'?`<div class="stats"><span class="atk">⚔ ${c.atk}</span><span class="def">🛡 ${c.def}</span></div>`:''}
+      <div class="txt">${c.txt||''}</div></div>`;
+  }).join('');
   document.getElementById('log').innerHTML = G.log.map(m=>`<div>${m}</div>`).join('');
 }
 
 /* ================= UI ================= */
 function clickCard(i){
-  if(pendingPass) return;
-  if(mode==='ai' && G.turn!==0) return;
-  const p = G.players[G.turn];
+  if(busy || !G || G.over || G.turn!==0) return;
+  const p = G.players[0];
   const card = cardById(p.hand[i]);
   if(card.type==='spell'){
-    if(p.actions>0){ playCard(G.turn, i, 0); selCard=null; render(); checkEnd(); }
+    if(p.actions>0){ playCard(0,i,0); selCard=null; render(); checkEnd(); }
     return;
   }
   selCard = selCard===i ? null : i;
@@ -544,19 +835,18 @@ function clickCard(i){
   render();
 }
 function clickLane(i){
-  if(pendingPass) return;
-  if(mode==='ai' && G.turn!==0) return;
-  if(selCard===null) return;
-  if(playCard(G.turn, selCard, i)){ selCard=null; render(); }
+  if(busy || !G || G.over || G.turn!==0 || selCard===null) return;
+  if(playCard(0, selCard, i)){ selCard=null; render(); popAt('my', i); }
 }
 function clickCreature(i){
-  if(pendingPass) return;
-  if(mode==='ai' && G.turn!==0) return;
-  const p = G.players[G.turn];
+  if(busy || !G || G.over || G.turn!==0) return;
+  const p = G.players[0];
   const c = p.lanes[i].creature;
   if(!c) return;
   if(selCreature===i){
-    if(c.floop && !c.flooped && p.actions>0){ floop(G.turn, i); }
+    if(c.floop && !c.flooped && (p.actions>0 || (p.hero.ability==='freeFloop' && !p.freeFloopUsed))){
+      floop(0,i); render(); spinAt('my', i); checkEnd();
+    }
     selCreature = null;
   } else {
     selCreature = i;
@@ -564,34 +854,93 @@ function clickCreature(i){
   }
   render();
 }
-function setMode(m){
-  mode = m;
-  document.getElementById('modeAi').classList.toggle('sel', m==='ai');
-  document.getElementById('modeLocal').classList.toggle('sel', m==='local');
+async function playerAttack(){
+  if(busy || !G || G.over || G.turn!==0) return;
+  busy = true; render();
+  await attackSeq(0);
+  busy = false; render();
 }
-function startGame(){
-  let foeHero;
-  if(mode==='ai'){
-    const others = HEROES.filter(h=>h.id!==selHero);
-    foeHero = others[Math.floor(Math.random()*others.length)].id;
-  } else {
-    foeHero = HEROES.find(h=>h.id!==selHero).id;
-  }
-  G = {players:[newPlayer(selHero,false), newPlayer(foeHero, mode==='ai')], turn:0, log:[], over:false};
-  startTurn(0);
-  document.getElementById('scr-select').classList.remove('on');
-  document.getElementById('scr-game').classList.add('on');
-  render();
+function playerEndTurn(){
+  if(busy || !G || G.over || G.turn!==0) return;
+  selCard = null; selCreature = null;
+  G.turn = 1; startTurn(1); render();
+  aiTurn();
 }
-/* hero select grid */
-document.getElementById('heroGrid').innerHTML = HEROES.map(h=>`
-  <div class="hero-card ${h.id===selHero?'sel':''}" id="hc-${h.id}" onclick="pickHero('${h.id}')">
-    ${heroSvg(h.id)}<div class="hn">${h.name}</div><div class="hd">${h.desc}</div>
-  </div>`).join('');
+
+/* ================= NAVIGATION ================= */
+function showScreen(name){
+  ['menu','heroes','map','battle'].forEach(s=>document.getElementById('scr-'+s).classList.toggle('on', s===name));
+  if(name==='menu'){ setScene('treefort'); renderMenu(); }
+  if(name==='map') renderMap();
+  if(name==='heroes') renderHeroes();
+  window.scrollTo(0,0);
+}
+function renderMenu(){
+  const h = heroById(SAVE.hero);
+  document.getElementById('menuHeroes').innerHTML = heroSvg('boy') + heroSvg('dog');
+  document.getElementById('menuHeroSvg').innerHTML = heroSvg(h.id);
+  document.getElementById('menuHeroName').textContent = h.name;
+  document.getElementById('lvlBadge').textContent = 'المستوى ' + SAVE.level;
+  document.getElementById('xpFill').style.width = Math.round(SAVE.xp/xpNext()*100) + '%';
+  document.getElementById('xpText').textContent = `${SAVE.xp} / ${xpNext()} خبرة — بطاقات حتى ${'★'.repeat(tierCapForLevel(SAVE.level))}`;
+}
+function renderHeroes(){
+  document.getElementById('heroGrid').innerHTML = HEROES.map(h=>`
+    <div class="hero-card ${h.id===SAVE.hero?'sel':''}" onclick="pickHero('${h.id}')">
+      ${heroSvg(h.id)}<div class="hn">${h.name}</div>
+      <div class="hl">أرضه: ${LANDS[h.land].name}</div>
+      <div class="hd">${h.desc}</div>
+    </div>`).join('');
+}
 function pickHero(id){
-  selHero = id;
-  HEROES.forEach(h=>document.getElementById('hc-'+h.id).classList.toggle('sel', h.id===id));
+  SAVE.hero = id; saveGame();
+  renderHeroes();
+  speak(heroById(id).lines.start, heroById(id).pitch);
+  beep(660,.12,'triangle',.1);
 }
+function renderMap(){
+  document.getElementById('mapGrid').innerHTML = LEVELS.map((lv,i)=>{
+    const locked = i > SAVE.completed;
+    const done = i < SAVE.completed;
+    const foe = heroById(lv.foe);
+    return `<div class="lvl-node ${locked?'locked':''} ${done?'done':''}" ${locked?'':`onclick="startBattle(${i})"`}>
+      ${locked?'<span class="lock">🔒</span>':''}
+      ${heroSvg(lv.foe)}
+      <div class="ln">المستوى ${i+1}${done?' ✓':''}</div>
+      <div class="lp">${lv.place} — ضد ${foe.name}</div>
+    </div>`;
+  }).join('');
+}
+function startBattle(idx){
+  const lv = LEVELS[idx];
+  G = {players:[newPlayer(SAVE.hero, tierCapForLevel(SAVE.level), 25, false),
+                newPlayer(lv.foe, lv.tier, lv.hp, true)],
+       turn:0, log:[], over:false, levelIdx:idx};
+  startTurn(0);
+  setScene(lv.scene);
+  showScreen('battle');
+  document.getElementById('vsPlace').textContent = lv.place;
+  document.getElementById('vsRow').innerHTML = heroSvg(SAVE.hero) + '<span class="vs-txt">ضد</span>' + heroSvg(lv.foe);
+  document.getElementById('vsText').textContent = 'الخاسر كيشرب الصودا المقززة!';
+  document.getElementById('vsOverlay').classList.add('on');
+  render();
+  setTimeout(()=>{
+    document.getElementById('vsOverlay').classList.remove('on');
+    say('myFighter', G.players[0].hero, 'start');
+    setTimeout(()=>say('foeFighter', G.players[1].hero, 'start'), 1200);
+  }, 1700);
+}
+function closeEnd(){ document.getElementById('endOverlay').classList.remove('on'); }
+function nextLevel(){
+  closeEnd();
+  const n = Math.min(G.levelIdx+1, LEVELS.length-1);
+  startBattle(n);
+}
+
+/* ================= INIT ================= */
+document.getElementById('soundBtn').textContent = SAVE.sound ? '🔊' : '🔇';
+setScene('treefort');
+renderMenu();
 </script>
 </body>
 </html>
