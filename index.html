@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>حرب البطاقات</title>
+<meta name="theme-color" content="#14142b">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#14142b; --panel:#1f1f3d; --panel2:#2a2a52; --ink:#f4f1e6; --muted:#b9b4d6;
+  --gold:#f5a623; --red:#e74c3c; --green:#2ecc71; --blue:#4a90d9;
+}
+body{margin:0;background:radial-gradient(1200px 700px at 50% -10%,#2b2b5e 0%,var(--bg) 60%);color:var(--ink);font-family:system-ui,'Segoe UI',Tahoma,sans-serif;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;padding:10px 16px;font-weight:700;font-size:15px}
+.btn-gold{background:var(--gold);color:#241a00}
+.btn-ghost{background:var(--panel2);color:var(--ink);border:1px solid #45457a}
+.btn-red{background:var(--red);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
+.screen{display:none;max-width:560px;margin:0 auto;padding:14px 10px 30px}
+.screen.on{display:block}
+h1.logo{text-align:center;font-size:34px;margin:18px 0 2px;color:var(--gold);text-shadow:0 3px 0 #7a4d00}
+.sub{text-align:center;color:var(--muted);margin:0 0 18px;font-size:14px}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hero-card{background:var(--panel);border:2px solid #3a3a6e;border-radius:16px;padding:12px;text-align:center;cursor:pointer;transition:.15s}
+.hero-card.sel{border-color:var(--gold);background:#2c2c58;transform:scale(1.02)}
+.hero-card svg{width:74px;height:74px}
+.hero-card .hn{font-weight:800;font-size:17px;margin-top:4px}
+.hero-card .hd{color:var(--muted);font-size:12.5px;line-height:1.5;margin-top:3px;min-height:38px}
+.mode-row{display:flex;gap:8px;margin:16px 0 6px}
+.mode-row button{flex:1}
+.mode-row button.sel{outline:3px solid var(--gold)}
+/* ===== table ===== */
+.opp-bar,.my-bar{display:flex;align-items:center;gap:10px;background:var(--panel);border-radius:14px;padding:8px 12px;margin-bottom:8px}
+.opp-bar svg,.my-bar svg{width:46px;height:46px;flex:none}
+.hp{font-size:20px;font-weight:900;color:#ff8a7a}
+.hp small{font-size:11px;color:var(--muted);font-weight:600}
+.pname{font-weight:800}
+.hand-count{margin-inline-start:auto;color:var(--muted);font-size:13px}
+.lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:8px}
+.lane{border-radius:12px;min-height:118px;padding:5px;position:relative;border:2px solid rgba(255,255,255,.14);display:flex;flex-direction:column}
+.lane .land-name{font-size:10.5px;font-weight:800;text-align:center;color:rgba(0,0,0,.65);background:rgba(255,255,255,.35);border-radius:7px;padding:1px 2px;margin-bottom:4px}
+.lane.target{outline:3px dashed #fff;cursor:pointer}
+.creature{background:#fffdf4;color:#222;border-radius:9px;padding:5px 4px;text-align:center;box-shadow:0 3px 6px rgba(0,0,0,.35);cursor:pointer;position:relative}
+.creature .cn{font-size:11.5px;font-weight:800;line-height:1.25;min-height:28px}
+.creature .stats{display:flex;justify-content:space-between;font-weight:900;font-size:15px;margin-top:2px}
+.creature .atk{color:#c0392b}.creature .def{color:#2471a3}
+.creature .fl{font-size:9.5px;color:#7d3c98;font-weight:700;margin-top:2px;line-height:1.3}
+.creature.flooped{opacity:.55;transform:rotate(-4deg)}
+.creature.frozen{filter:saturate(.3) brightness(1.15)}
+.creature.sel{outline:3px solid var(--gold)}
+.building{margin-top:4px;background:#3b2f1a;color:#ffd98a;border-radius:7px;font-size:9.5px;font-weight:700;text-align:center;padding:3px 2px;line-height:1.3}
+.empty-lane{flex:1;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.35);font-size:20px}
+.mid-bar{display:flex;align-items:center;gap:8px;margin:6px 0}
+.mid-bar .turn-info{font-weight:800;font-size:14px}
+.mid-bar .actions{color:var(--gold);font-weight:800;font-size:13px}
+.hand{display:flex;gap:7px;overflow-x:auto;padding:8px 2px 4px;min-height:128px}
+.card{flex:none;width:104px;background:#fffdf4;color:#222;border-radius:11px;padding:6px;box-shadow:0 4px 8px rgba(0,0,0,.4);cursor:pointer;position:relative;border-top:9px solid #999}
+.card.sel{outline:3px solid var(--gold);transform:translateY(-8px)}
+.card .cn{font-size:12px;font-weight:800;line-height:1.3;min-height:31px}
+.card .ct{font-size:9.5px;color:#888;font-weight:700}
+.card .stats{display:flex;justify-content:space-between;font-weight:900;font-size:16px;margin-top:2px}
+.card .atk{color:#c0392b}.card .def{color:#2471a3}
+.card .txt{font-size:10px;color:#555;line-height:1.4;margin-top:3px;min-height:28px}
+.card .land-tag{position:absolute;top:-9px;inset-inline-start:6px;background:rgba(0,0,0,.55);color:#fff;font-size:8.5px;font-weight:800;border-radius:5px;padding:1px 5px}
+.log{background:var(--panel);border-radius:12px;padding:8px 12px;font-size:12.5px;color:var(--muted);height:74px;overflow-y:auto;line-height:1.7;margin-top:8px}
+.log b{color:var(--ink)}
+.overlay{position:fixed;inset:0;background:rgba(10,10,25,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.overlay.on{display:flex}
+.overlay .box{background:var(--panel);border-radius:18px;padding:24px;text-align:center;max-width:380px;width:100%}
+.overlay h2{margin:0 0 8px;font-size:24px}
+.overlay p{color:var(--muted);line-height:1.7}
+.ability-btn{background:#7d3c98;color:#fff}
+.small-note{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<!-- ===== Screen 1: hero select ===== -->
+<div class="screen on" id="scr-select">
+  <h1 class="logo">حرب البطاقات</h1>
+  <p class="sub">اختار البطل ديالك، وادخل للمعركة على الطاولة</p>
+  <div class="hero-grid" id="heroGrid"></div>
+  <div class="mode-row">
+    <button class="btn-ghost sel" id="modeAi" onclick="setMode('ai')">ضد الذكاء الاصطناعي</button>
+    <button class="btn-ghost" id="modeLocal" onclick="setMode('local')">لاعبان في نفس التيليفون</button>
+  </div>
+  <button class="btn-gold" style="width:100%;font-size:18px;padding:14px" onclick="startGame()">ابدأ اللعبة</button>
+  <p class="small-note">القواعد: كل لاعب عندو 25 نقطة حياة و4 أراضٍ. العب المخلوقات في الأرض اللي كتناسب لونها، استعمل قوى «فلوب»، وهاجم حتى تطيح حياة الخصم لصفر.</p>
+</div>
+
+<!-- ===== Screen 2: game ===== -->
+<div class="screen" id="scr-game">
+  <div class="opp-bar" id="oppBar"></div>
+  <div class="lanes" id="oppLanes"></div>
+  <div class="mid-bar">
+    <span class="turn-info" id="turnInfo"></span>
+    <span class="actions" id="actionsInfo"></span>
+    <span style="flex:1"></span>
+    <button class="ability-btn" id="heroAbilityBtn" style="display:none" onclick="useHeroAbility()">قدرة البطل</button>
+    <button class="btn-red" id="attackBtn" onclick="doAttack()">هجوم</button>
+    <button class="btn-gold" id="endBtn" onclick="endTurn()">إنهاء الدور</button>
+  </div>
+  <div class="lanes" id="myLanes"></div>
+  <div class="my-bar" id="myBar"></div>
+  <div class="hand" id="hand"></div>
+  <div class="log" id="log"></div>
+</div>
+
+<!-- ===== overlays ===== -->
+<div class="overlay" id="passOverlay">
+  <div class="box">
+    <h2 id="passTitle">مرر التيليفون</h2>
+    <p id="passText"></p>
+    <button class="btn-gold" style="width:100%" onclick="confirmPass()">أنا جاهز</button>
+  </div>
+</div>
+<div class="overlay" id="endOverlay">
+  <div class="box">
+    <h2 id="endTitle"></h2>
+    <p id="endText"></p>
+    <button class="btn-gold" style="width:100%" onclick="location.reload()">العب مرة أخرى</button>
+  </div>
+</div>
+
+<script>
+/* ================= DATA ================= */
+const LANDS = {
+  corn:  {name:'حقول الذرة',      color:'#f2b705'},
+  blue:  {name:'السهول الزرقاء',  color:'#4a90d9'},
+  sand:  {name:'الرمال',          color:'#e08a3c'},
+  swamp: {name:'المستنقع',        color:'#6a994e'},
+  nice:  {name:'الأراضي اللطيفة', color:'#f28bb4'}
+};
+const LAND_KEYS = Object.keys(LANDS);
+
+function heroSvg(kind){
+  const face = (skin, extra) => `<svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="34" fill="${skin}"/><circle cx="39" cy="48" r="4" fill="#222"/><circle cx="61" cy="48" r="4" fill="#222"/><path d="M40 64 Q50 71 60 64" stroke="#222" stroke-width="3.5" fill="none" stroke-linecap="round"/>${extra}</svg>`;
+  switch(kind){
+    case 'boy': return face('#ffd9a0', `<path d="M16 50 Q14 12 50 12 Q86 12 84 50 L74 50 Q76 24 50 24 Q24 24 26 50 Z" fill="#ffffff" stroke="#d9d9d9" stroke-width="2"/>`);
+    case 'dog': return `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="55" rx="30" ry="27" fill="#f7c948"/><ellipse cx="22" cy="42" rx="8" ry="18" fill="#e0a81e"/><ellipse cx="78" cy="42" rx="8" ry="18" fill="#e0a81e"/><circle cx="40" cy="50" r="4" fill="#222"/><circle cx="60" cy="50" r="4" fill="#222"/><ellipse cx="50" cy="62" rx="7" ry="5" fill="#222"/><path d="M42 72 Q50 78 58 72" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/></svg>`;
+    case 'princess': return face('#ffb3d9', `<path d="M28 26 L36 10 L46 22 L50 8 L54 22 L64 10 L72 26 Z" fill="#f5a623" stroke="#c77f0a" stroke-width="2"/><circle cx="50" cy="20" r="4" fill="#e74c3c"/>`);
+    case 'vampire': return face('#e8e4f5', `<path d="M16 52 Q12 10 50 12 Q88 10 84 52 L76 52 Q78 26 50 24 Q22 26 24 52 Z" fill="#2b2b3d"/><path d="M44 68 L47 76 L50 68 M50 68 L53 76 L56 68" fill="#fff" stroke="#ccc"/>`);
+    case 'iceking': return face('#bfe3ff', `<path d="M26 28 L34 8 L44 22 L50 6 L56 22 L66 8 L74 28 Z" fill="#f5a623" stroke="#c77f0a" stroke-width="2"/><path d="M30 66 Q50 96 70 66 Q62 78 50 78 Q38 78 30 66" fill="#ffffff"/>`);
+    case 'robot': return `<svg viewBox="0 0 100 100"><rect x="22" y="28" width="56" height="48" rx="10" fill="#b8c4ce"/><rect x="30" y="42" width="14" height="10" rx="3" fill="#223"/><rect x="56" y="42" width="14" height="10" rx="3" fill="#223"/><rect x="40" y="62" width="20" height="5" rx="2.5" fill="#223"/><line x1="50" y1="28" x2="50" y2="14" stroke="#8a97a3" stroke-width="4"/><circle cx="50" cy="11" r="5" fill="#e74c3c"/></svg>`;
+  }
+  return face('#ffd9a0','');
+}
+
+const HEROES = [
+  {id:'boy',      name:'البطل',        desc:'مخلوقاتك كلها +1 في الهجوم', ability:'atk1'},
+  {id:'dog',      name:'الكلب السحري', desc:'مرة في الدور: العب مخلوقاً في أي أرض', ability:'freeLand'},
+  {id:'princess', name:'أميرة الحلوى', desc:'استرجع نقطة حياة في بداية دورك', ability:'regen1'},
+  {id:'vampire',  name:'ملكة الليل',   desc:'حين تضرب حياة الخصم تسترجع حياة', ability:'lifesteal'},
+  {id:'iceking',  name:'ملك الثلج',    desc:'جمّد أقوى مخلوق عند الخصم (كل 3 أدوار)', ability:'freeze'},
+  {id:'robot',    name:'الروبوت',      desc:'اسحب بطاقة إضافية في بداية دورك', ability:'draw1'}
+];
+
+/* floop keys: buffAtk2, heal2, dmg2any, poison1, def3, dmg3lane, discard, heal3, shield3 */
+const CARDS = [
+  /* cornfield */
+  {id:'c1', name:'مقاتل الذرة', type:'creature', land:'corn', atk:3, def:3, floop:'buffAtk2', txt:'فلوب: +2 هجوم هذا الدور'},
+  {id:'c2', name:'خنزير الحرب', type:'creature', land:'corn', atk:4, def:2, txt:''},
+  {id:'c3', name:'روح الحقل',   type:'creature', land:'corn', atk:2, def:4, floop:'heal2', txt:'فلوب: استرجع 2 حياة'},
+  /* blue plains */
+  {id:'b1', name:'فارس الماء',     type:'creature', land:'blue', atk:3, def:4, txt:''},
+  {id:'b2', name:'تنين البحر',     type:'creature', land:'blue', atk:5, def:3, txt:''},
+  {id:'b3', name:'ساحر السهول',    type:'creature', land:'blue', atk:2, def:3, floop:'dmg2any', txt:'فلوب: 2 ضرر لأقوى مخلوق عدو'},
+  /* sandylands */
+  {id:'s1', name:'عقرب الرمال',   type:'creature', land:'sand', atk:3, def:2, floop:'poison1', txt:'فلوب: 1 ضرر لمخلوق في نفس الطريق'},
+  {id:'s2', name:'محارب الصحراء', type:'creature', land:'sand', atk:4, def:4, txt:''},
+  {id:'s3', name:'جني الرمال',    type:'creature', land:'sand', atk:3, def:5, floop:'def3', txt:'فلوب: +3 دفاع هذا الدور'},
+  /* swamp */
+  {id:'w1', name:'وحش المستنقع',  type:'creature', land:'swamp', atk:5, def:5, txt:''},
+  {id:'w2', name:'ضفدع سام',      type:'creature', land:'swamp', atk:2, def:2, floop:'dmg3lane', txt:'فلوب: 3 ضرر لمخلوق في نفس الطريق'},
+  {id:'w3', name:'ساحرة المستنقع',type:'creature', land:'swamp', atk:3, def:3, floop:'discard', txt:'فلوب: الخصم يرمي بطاقة'},
+  /* nicelands */
+  {id:'n1', name:'وحيد القرن',    type:'creature', land:'nice', atk:3, def:3, floop:'heal3', txt:'فلوب: استرجع 3 حياة'},
+  {id:'n2', name:'فارس الحلوى',   type:'creature', land:'nice', atk:4, def:3, txt:''},
+  {id:'n3', name:'ملاك الأراضي',  type:'creature', land:'nice', atk:2, def:5, floop:'shield3', txt:'فلوب: +3 دفاع هذا الدور'},
+  /* any land */
+  {id:'a1', name:'التنين الصغير', type:'creature', land:'any', atk:4, def:4, txt:'يلعب في أي أرض'},
+  /* buildings */
+  {id:'bd1', name:'برج الذرة',  type:'building', land:'corn',  txt:'مخلوقات هذا الطريق +1/+1'},
+  {id:'bd2', name:'قلعة الماء', type:'building', land:'blue',  txt:'مخلوقات هذا الطريق +0/+2'},
+  {id:'bd3', name:'معبد الرمال',type:'building', land:'sand',  txt:'مخلوقات هذا الطريق +2/+0'},
+  {id:'bd4', name:'بيت الحلوى', type:'building', land:'nice',  txt:'استرجع 1 حياة في بداية دورك'},
+  /* spells */
+  {id:'sp1', name:'صاعقة',      type:'spell', land:'any', txt:'4 ضرر لأقوى مخلوق عدو'},
+  {id:'sp2', name:'شفاء',       type:'spell', land:'any', txt:'استرجع 5 حياة'},
+  {id:'sp3', name:'عاصفة',      type:'spell', land:'any', txt:'2 ضرر لكل مخلوقات الخصم'},
+  {id:'sp4', name:'سحب سحري',   type:'spell', land:'any', txt:'اسحب بطاقتين'}
+];
+const cardById = id => CARDS.find(c => c.id === id);
+
+/* ================= STATE ================= */
+let selHero = 'boy';
+let mode = 'ai';
+let G = null;
+let selCard = null;      // index in current player's hand
+let selCreature = null;  // lane index of selected own creature
+let pendingPass = null;
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function buildDeck(){
+  const d = [];
+  CARDS.forEach(c => { d.push(c.id); if(c.type==='creature') d.push(c.id); });
+  return shuffle(d);
+}
+function makeLanes(){
+  const keys = shuffle([...LAND_KEYS]).slice(0,4);
+  return keys.map(k => ({land:k, creature:null, building:null}));
+}
+function newPlayer(heroId, isAI){
+  const p = {hero:HEROES.find(h=>h.id===heroId), hp:25, deck:buildDeck(), hand:[], lanes:makeLanes(), actions:2, isAI:!!isAI, freeLandUsed:false, freezeCd:0};
+  for(let i=0;i<5;i++) draw(p);
+  return p;
+}
+function draw(p){ if(p.deck.length) p.hand.push(p.deck.pop()); }
+function logMsg(m){ G.log.unshift(m); if(G.log.length>30) G.log.pop(); }
+
+/* stats with building + hero passive */
+function cAtk(p, lane){
+  const c = lane.creature; if(!c) return 0;
+  let a = c.atk + (c.buffAtk||0);
+  if(lane.building==='bd1') a+=1;
+  if(lane.building==='bd3') a+=2;
+  if(p.hero.ability==='atk1') a+=1;
+  return a;
+}
+function cDef(p, lane){
+  const c = lane.creature; if(!c) return 0;
+  let d = c.hp + (c.buffDef||0);
+  if(lane.building==='bd1') d+=1;
+  if(lane.building==='bd2') d+=2;
+  return d;
+}
+function hurtCreature(owner, lane, dmg){
+  const c = lane.creature; if(!c) return;
+  c.hp -= dmg;
+  if(c.hp <= 0){
+    logMsg(`مات <b>${c.name}</b>`);
+    lane.creature = null;
+  }
+}
+function strongestEnemyCreature(pIdx){
+  const foe = G.players[1-pIdx];
+  let best = null;
+  foe.lanes.forEach((l,i)=>{ if(l.creature && (!best || cAtk(foe,l) > cAtk(foe, foe.lanes[best]))) best = i; });
+  return best;
+}
+function checkEnd(){
+  const [a,b] = G.players;
+  if(a.hp<=0 || b.hp<=0){
+    const winner = a.hp<=0 ? b : a;
+    document.getElementById('endTitle').textContent = winner.isAI ? 'خسرت المعركة' : 'ربحت المعركة!';
+    document.getElementById('endText').textContent = `الفائز: ${winner.hero.name} — بقيت عندو ${Math.max(0,winner.hp)} نقطة حياة.`;
+    document.getElementById('endOverlay').classList.add('on');
+    G.over = true;
+    return true;
+  }
+  return false;
+}
+
+/* ================= ACTIONS ================= */
+function canPlayOn(p, card, lane){
+  if(card.type==='creature'){
+    if(lane.creature) return false;
+    if(card.land==='any') return true;
+    if(p.hero.ability==='freeLand' && !p.freeLandUsed) return true;
+    return lane.land === card.land;
+  }
+  if(card.type==='building'){
+    if(lane.building) return false;
+    return lane.land === card.land;
+  }
+  return false;
+}
+function playCard(pIdx, handIdx, laneIdx){
+  const p = G.players[pIdx];
+  const card = cardById(p.hand[handIdx]);
+  if(p.actions<=0) return false;
+  if(card.type==='spell'){
+    p.hand.splice(handIdx,1); p.actions--;
+    castSpell(pIdx, card);
+    return true;
+  }
+  const lane = p.lanes[laneIdx];
+  if(!canPlayOn(p, card, lane)) return false;
+  p.hand.splice(handIdx,1); p.actions--;
+  if(card.type==='creature'){
+    if(p.hero.ability==='freeLand' && card.land!=='any' && lane.land!==card.land) p.freeLandUsed = true;
+    lane.creature = {id:card.id, name:card.name, atk:card.atk, hp:card.def, floop:card.floop||null, flooped:false, frozen:false, buffAtk:0, buffDef:0};
+    logMsg(`<b>${p.hero.name}</b> لعب ${card.name}`);
+  } else {
+    lane.building = card.id;
+    logMsg(`<b>${p.hero.name}</b> بنى ${card.name}`);
+  }
+  return true;
+}
+function castSpell(pIdx, card){
+  const p = G.players[pIdx], foe = G.players[1-pIdx];
+  logMsg(`<b>${p.hero.name}</b> استعمل ${card.name}`);
+  if(card.id==='sp1'){
+    const t = strongestEnemyCreature(pIdx);
+    if(t!==null) hurtCreature(foe, foe.lanes[t], 4);
+  } else if(card.id==='sp2'){
+    p.hp = Math.min(25, p.hp+5);
+  } else if(card.id==='sp3'){
+    foe.lanes.forEach(l => { if(l.creature) hurtCreature(foe, l, 2); });
+  } else if(card.id==='sp4'){
+    draw(p); draw(p);
+  }
+}
+function floop(pIdx, laneIdx){
+  const p = G.players[pIdx], foe = G.players[1-pIdx];
+  const lane = p.lanes[laneIdx], c = lane.creature;
+  if(!c || !c.floop || c.flooped || p.actions<=0) return false;
+  c.flooped = true; p.actions--;
+  logMsg(`<b>${c.name}</b> استعمل قوتو`);
+  switch(c.floop){
+    case 'buffAtk2': c.buffAtk += 2; break;
+    case 'def3': case 'shield3': c.buffDef += 3; c.hp += 0; break;
+    case 'heal2': p.hp = Math.min(25, p.hp+2); break;
+    case 'heal3': p.hp = Math.min(25, p.hp+3); break;
+    case 'dmg2any': { const t = strongestEnemyCreature(pIdx); if(t!==null) hurtCreature(foe, foe.lanes[t], 2); } break;
+    case 'poison1': if(foe.lanes[laneIdx].creature) hurtCreature(foe, foe.lanes[laneIdx], 1); break;
+    case 'dmg3lane': if(foe.lanes[laneIdx].creature) hurtCreature(foe, foe.lanes[laneIdx], 3); break;
+    case 'discard': if(foe.hand.length) foe.hand.splice(Math.floor(Math.random()*foe.hand.length),1); break;
+  }
+  return true;
+}
+function doAttack(){
+  if(!G || G.over) return;
+  const pIdx = G.turn, p = G.players[pIdx], foe = G.players[1-pIdx];
+  let playerDmg = 0;
+  p.lanes.forEach((lane,i)=>{
+    const c = lane.creature;
+    if(!c || c.flooped || c.frozen) return;
+    const atk = cAtk(p, lane);
+    const foeLane = foe.lanes[i];
+    if(foeLane.creature){
+      const defAtk = cAtk(foe, foeLane);
+      logMsg(`<b>${c.name}</b> هاجم ${foeLane.creature.name}`);
+      hurtCreature(foe, foeLane, atk);
+      hurtCreature(p, lane, defAtk);
+    } else {
+      foe.hp -= atk; playerDmg += atk;
+      logMsg(`<b>${c.name}</b> ضرب ${foe.hero.name} بـ${atk}`);
+    }
+    c.flooped = true;
+  });
+  if(p.hero.ability==='lifesteal' && playerDmg>0){
+    p.hp = Math.min(25, p.hp + Math.min(3, playerDmg));
+  }
+  render();
+  checkEnd();
+}
+function useHeroAbility(){
+  const pIdx = G.turn, p = G.players[pIdx];
+  if(p.hero.ability!=='freeze' || p.freezeCd>0 || p.actions<=0) return;
+  const t = strongestEnemyCreature(pIdx);
+  if(t===null) return;
+  G.players[1-pIdx].lanes[t].creature.frozen = true;
+  p.freezeCd = 3; p.actions--;
+  logMsg(`<b>${p.hero.name}</b> جمّد ${G.players[1-pIdx].lanes[t].creature.name}`);
+  render();
+}
+function startTurn(pIdx){
+  const p = G.players[pIdx];
+  p.actions = 2; p.freeLandUsed = false;
+  if(p.freezeCd>0) p.freezeCd--;
+  p.lanes.forEach(l=>{
+    if(l.creature){ l.creature.flooped=false; l.creature.buffAtk=0; l.creature.buffDef=0; }
+    if(l.building==='bd4') p.hp = Math.min(25, p.hp+1);
+  });
+  /* unfreeze creatures frozen last round */
+  G.players[1-pIdx].lanes.forEach(l=>{ if(l.creature) l.creature.frozen=false; });
+  draw(p);
+  if(p.hero.ability==='regen1') p.hp = Math.min(25, p.hp+1);
+  if(p.hero.ability==='draw1') draw(p);
+  logMsg(`— دور <b>${p.hero.name}</b> —`);
+}
+function endTurn(){
+  if(!G || G.over) return;
+  selCard = null; selCreature = null;
+  G.turn = 1 - G.turn;
+  startTurn(G.turn);
+  if(mode==='local'){
+    pendingPass = G.turn;
+    document.getElementById('passTitle').textContent = 'مرر التيليفون';
+    document.getElementById('passText').textContent = `الدور ديال ${G.players[G.turn].hero.name}. مرر التيليفون ليه واضغط أنا جاهز.`;
+    document.getElementById('passOverlay').classList.add('on');
+    render(true);
+    return;
+  }
+  render();
+  if(G.players[G.turn].isAI) setTimeout(aiTurn, 700);
+}
+function confirmPass(){
+  document.getElementById('passOverlay').classList.remove('on');
+  pendingPass = null;
+  render();
+}
+
+/* ================= AI ================= */
+function aiTurn(){
+  if(!G || G.over) return;
+  const pIdx = G.turn, p = G.players[pIdx];
+  let guard = 0;
+  while(p.actions>0 && guard++<10){
+    /* play strongest playable creature first */
+    let best = null;
+    p.hand.forEach((cid,hi)=>{
+      const card = cardById(cid);
+      if(card.type!=='creature') return;
+      p.lanes.forEach((lane,li)=>{
+        if(canPlayOn(p,card,lane) && (!best || card.atk>best.atk)) best = {hi,li,atk:card.atk};
+      });
+    });
+    if(best){ playCard(pIdx, best.hi, best.li); continue; }
+    /* play a building */
+    let built = false;
+    p.hand.forEach((cid,hi)=>{
+      if(built) return;
+      const card = cardById(cid);
+      if(card.type!=='building') return;
+      p.lanes.forEach((lane,li)=>{ if(!built && canPlayOn(p,card,lane)){ playCard(pIdx,hi,li); built=true; } });
+    });
+    if(built) continue;
+    /* spells: bolt if enemy has a big creature, heal if hurt, storm if 2+ enemies */
+    let cast = false;
+    const foe = G.players[1-pIdx];
+    const foeCount = foe.lanes.filter(l=>l.creature).length;
+    p.hand.forEach((cid,hi)=>{
+      if(cast) return;
+      if(cid==='sp1' && strongestEnemyCreature(pIdx)!==null){ playCard(pIdx,hi,0); cast=true; }
+      else if(cid==='sp2' && p.hp<=17){ playCard(pIdx,hi,0); cast=true; }
+      else if(cid==='sp3' && foeCount>=2){ playCard(pIdx,hi,0); cast=true; }
+      else if(cid==='sp4'){ playCard(pIdx,hi,0); cast=true; }
+    });
+    if(cast) continue;
+    /* floop damage/heal abilities */
+    let fl = false;
+    p.lanes.forEach((lane,li)=>{
+      if(fl || !lane.creature || !lane.creature.floop || lane.creature.flooped) return;
+      const k = lane.creature.floop;
+      if(['dmg2any','dmg3lane','poison1'].includes(k) && (strongestEnemyCreature(pIdx)!==null || foe.lanes[li].creature)){ floop(pIdx,li); fl=true; }
+      else if((k==='heal2'||k==='heal3') && p.hp<=19){ floop(pIdx,li); fl=true; }
+      else if(k==='buffAtk2'){ floop(pIdx,li); fl=true; }
+      else if(k==='discard' && foe.hand.length){ floop(pIdx,li); fl=true; }
+    });
+    if(fl) continue;
+    break;
+  }
+  render();
+  setTimeout(()=>{ if(!checkEnd()){ doAttack(); setTimeout(()=>{ if(!G.over) endTurn(); }, 600); } }, 500);
+}
+
+/* ================= RENDER ================= */
+function creatureHtml(p, lane, laneIdx, mine){
+  const c = lane.creature;
+  if(!c) return `<div class="empty-lane">·</div>`;
+  const cls = ['creature', c.flooped?'flooped':'', c.frozen?'frozen':'', (mine && selCreature===laneIdx)?'sel':''].join(' ');
+  const click = mine ? `onclick="clickCreature(${laneIdx})"` : '';
+  return `<div class="${cls}" ${click}>
+    <div class="cn">${c.name}${c.frozen?' ❄':''}</div>
+    <div class="stats"><span class="atk">⚔ ${cAtk(p,lane)}</span><span class="def">🛡 ${cDef(p,lane)}</span></div>
+    ${c.floop?`<div class="fl">فلوب: ${cardById(c.id).txt.replace('فلوب: ','')}</div>`:''}
+  </div>`;
+}
+function lanesHtml(p, mine){
+  return p.lanes.map((lane,i)=>{
+    const land = LANDS[lane.land];
+    let target = '';
+    if(mine && selCard!==null){
+      const card = cardById(G.players[G.turn].hand[selCard]);
+      if(card && card.type!=='spell' && canPlayOn(G.players[G.turn], card, lane)) target = 'target';
+    }
+    const click = mine ? `onclick="clickLane(${i})"` : '';
+    const bName = lane.building ? cardById(lane.building).name : '';
+    return `<div class="lane ${target}" style="background:${land.color}cc" ${click}>
+      <div class="land-name">${land.name}</div>
+      ${creatureHtml(p, lane, i, mine)}
+      ${bName?`<div class="building">🏰 ${bName}</div>`:''}
+    </div>`;
+  }).join('');
+}
+function barHtml(p, label){
+  return `${heroSvg(p.hero.id)}<div><div class="pname">${p.hero.name}${label?' — '+label:''}</div><div class="hp">${Math.max(0,p.hp)} <small>نقطة حياة</small></div></div><div class="hand-count">بطاقات: ${p.hand.length} · رزمة: ${p.deck.length}</div>`;
+}
+function render(hideHand){
+  if(!G) return;
+  const cur = G.players[G.turn], foe = G.players[1-G.turn];
+  const myIdx = mode==='ai' ? 0 : G.turn;
+  const me = G.players[myIdx], opp = G.players[1-myIdx];
+  document.getElementById('oppBar').innerHTML = barHtml(opp, opp.isAI?'الذكاء الاصطناعي':'');
+  document.getElementById('myBar').innerHTML = barHtml(me, '');
+  document.getElementById('oppLanes').innerHTML = lanesHtml(opp, false);
+  document.getElementById('myLanes').innerHTML = lanesHtml(me, mode!=='ai' || G.turn===0);
+  document.getElementById('turnInfo').textContent = `الدور: ${cur.hero.name}`;
+  document.getElementById('actionsInfo').textContent = `حركات باقية: ${cur.actions}`;
+  const myTurn = mode==='ai' ? G.turn===0 : true;
+  document.getElementById('attackBtn').disabled = !myTurn || !!pendingPass;
+  document.getElementById('endBtn').disabled = !myTurn || !!pendingPass;
+  const hb = document.getElementById('heroAbilityBtn');
+  if(cur.hero.ability==='freeze' && myTurn && !pendingPass){
+    hb.style.display = '';
+    hb.disabled = cur.freezeCd>0 || cur.actions<=0;
+    hb.textContent = cur.freezeCd>0 ? `التجميد (${cur.freezeCd})` : 'جمّد مخلوقاً';
+  } else hb.style.display = 'none';
+  /* hand */
+  const handEl = document.getElementById('hand');
+  if(hideHand || pendingPass){ handEl.innerHTML = ''; }
+  else{
+    handEl.innerHTML = me.hand.map((cid,i)=>{
+      const c = cardById(cid);
+      const landColor = c.land==='any' ? '#999' : LANDS[c.land].color;
+      const landName = c.land==='any' ? 'أي أرض' : LANDS[c.land].name;
+      const typeName = c.type==='creature' ? 'مخلوق' : c.type==='building' ? 'مبنى' : 'تعويذة';
+      return `<div class="card ${selCard===i?'sel':''}" style="border-top-color:${landColor}" onclick="clickCard(${i})">
+        <span class="land-tag">${landName}</span>
+        <div class="cn">${c.name}</div><div class="ct">${typeName}</div>
+        ${c.type==='creature'?`<div class="stats"><span class="atk">⚔ ${c.atk}</span><span class="def">🛡 ${c.def}</span></div>`:''}
+        <div class="txt">${c.txt||''}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('log').innerHTML = G.log.map(m=>`<div>${m}</div>`).join('');
+}
+
+/* ================= UI ================= */
+function clickCard(i){
+  if(pendingPass) return;
+  if(mode==='ai' && G.turn!==0) return;
+  const p = G.players[G.turn];
+  const card = cardById(p.hand[i]);
+  if(card.type==='spell'){
+    if(p.actions>0){ playCard(G.turn, i, 0); selCard=null; render(); checkEnd(); }
+    return;
+  }
+  selCard = selCard===i ? null : i;
+  selCreature = null;
+  render();
+}
+function clickLane(i){
+  if(pendingPass) return;
+  if(mode==='ai' && G.turn!==0) return;
+  if(selCard===null) return;
+  if(playCard(G.turn, selCard, i)){ selCard=null; render(); }
+}
+function clickCreature(i){
+  if(pendingPass) return;
+  if(mode==='ai' && G.turn!==0) return;
+  const p = G.players[G.turn];
+  const c = p.lanes[i].creature;
+  if(!c) return;
+  if(selCreature===i){
+    if(c.floop && !c.flooped && p.actions>0){ floop(G.turn, i); }
+    selCreature = null;
+  } else {
+    selCreature = i;
+    if(c.floop && !c.flooped) logMsg(`اضغط مرة أخرى على <b>${c.name}</b> باش تستعمل قوتو`);
+  }
+  render();
+}
+function setMode(m){
+  mode = m;
+  document.getElementById('modeAi').classList.toggle('sel', m==='ai');
+  document.getElementById('modeLocal').classList.toggle('sel', m==='local');
+}
+function startGame(){
+  let foeHero;
+  if(mode==='ai'){
+    const others = HEROES.filter(h=>h.id!==selHero);
+    foeHero = others[Math.floor(Math.random()*others.length)].id;
+  } else {
+    foeHero = HEROES.find(h=>h.id!==selHero).id;
+  }
+  G = {players:[newPlayer(selHero,false), newPlayer(foeHero, mode==='ai')], turn:0, log:[], over:false};
+  startTurn(0);
+  document.getElementById('scr-select').classList.remove('on');
+  document.getElementById('scr-game').classList.add('on');
+  render();
+}
+/* hero select grid */
+document.getElementById('heroGrid').innerHTML = HEROES.map(h=>`
+  <div class="hero-card ${h.id===selHero?'sel':''}" id="hc-${h.id}" onclick="pickHero('${h.id}')">
+    ${heroSvg(h.id)}<div class="hn">${h.name}</div><div class="hd">${h.desc}</div>
+  </div>`).join('');
+function pickHero(id){
+  selHero = id;
+  HEROES.forEach(h=>document.getElementById('hc-'+h.id).classList.toggle('sel', h.id===id));
+}
+</script>
+</body>
+</html>
